@@ -6,14 +6,43 @@
 #include <string>
 #include <vector>
 
-const int cImageWidth = 512;
-const int cImageHeight = 512;
-
 struct Color {
   int r;
   int g;
   int b;
 };
+
+struct Point2D {
+  double x;
+  double y;
+};
+
+struct Triangle {
+  Point2D a;
+  Point2D b;
+  Point2D c;
+};
+
+const int cImageWidth = 512;
+const int cImageHeight = 512;
+
+const Point2D cA = {10.0, 500.0};
+const Point2D cB = {220.0, 460.0};
+const Point2D cC = {400.0, 250.0};
+const Triangle cTriangle = {cA, cB, cC};
+
+double Orientation(const Point2D& a, const Point2D& b, const Point2D& c) {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+bool IsInsideTriangle(
+    const Triangle& triangle,
+    const Point2D& p) {  // Вот не совсем понятно в каком порядке это делать
+
+  return (Orientation(triangle.a, triangle.b, p) <= 0) &&
+         (Orientation(triangle.b, triangle.c, p) <= 0) &&
+         (Orientation(triangle.c, triangle.a, p) <= 0);
+}
 
 namespace fs = std::filesystem;
 
@@ -61,7 +90,9 @@ int main() {
       pixels[i][j].r = 64;
       pixels[i][j].b = 64;
       pixels[i][j].g = 64;
-      if (i == j) {
+
+      Point2D p = {(double)j, (double)i};
+      if (IsInsideTriangle(cTriangle, p)) {
         pixels[i][j].b = 255;
       }
     }
