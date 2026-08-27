@@ -11,7 +11,7 @@ struct Vertex {
   Color color;
 };
 
-struct Triangle {
+struct TriangleMesh {
   int i0;
   int i1;
   int i2;
@@ -19,5 +19,5 @@ struct Triangle {
 
 struct Mesh {
   std::vector<Vertex> vertices;
-  std::vector<Triangle> triangles;
+  std::vector<TriangleMesh> triangles;
 };

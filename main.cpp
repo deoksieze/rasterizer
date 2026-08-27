@@ -7,8 +7,10 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Framebuffer.h"
+#include "math.h"
 
 namespace fs = std::filesystem;
 
@@ -29,6 +31,7 @@ struct Triangle {
   Vec2D a;
   Vec2D b;
   Vec2D c;
+  Color color;
 };
 
 struct BoundingBox {
@@ -62,34 +65,60 @@ const int cImageHeight = 512;
 const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
 
-const Vec2D cA1 = {80.0, 80.0};
-const Vec2D cB1 = {250.0, 120.0};
-const Vec2D cC1 = {150.0, 300.0};
-
-const Triangle cTriangle1 = {cA1, cB1, cC1};
-
-const Vec2D cA2 = {380.0, 350.0};
-const Vec2D cB2 = {620.0, 430.0};
-const Vec2D cC2 = {450.0, 650.0};
-
-const Triangle cTriangle2 = {cA2, cB2, cC2};
-
-const Vec2D cA3 = {-300.0, 100.0};
-const Vec2D cB3 = {-80.0, 180.0};
-const Vec2D cC3 = {-120.0, 400.0};
-
-const Triangle cTriangle3 = {cA3, cB3, cC3};
-
-const Vec2D cA4 = {350.2, 120.4};
-const Vec2D cB4 = {400.8, 180.6};
-const Vec2D cC4 = {370.5, 300.3};
-
-const Triangle cTriangle4 = {cA4, cB4, cC4};
-
 const Color cColorA = {1.0, 0.0, 0.0};
 const Color cColorB = {0.0, 1.0, 0.0};
 const Color cColorC = {0.0, 0.0, 1.0};
 const Color cBackGroundColor = {64.0 / 255.0, 64.0 / 255.0, 64.0 / 255.0};
+
+const Mesh cCube{
+    .vertices =
+        {
+            // Back layer: z = -0.45
+            // Нарисована ниже и немного левее
+            {{-0.65, -0.35, -0.45}, {1.0, 0.0, 0.0}},  // 0
+            {{+0.25, -0.35, -0.45}, {0.0, 1.0, 0.0}},  // 1
+            {{+0.25, +0.55, -0.45}, {0.0, 0.0, 1.0}},  // 2
+            {{-0.65, +0.55, -0.45}, {1.0, 1.0, 0.0}},  // 3
+
+            // Front layer: z = +0.45
+            // Сдвинута вправо и вниз относительно back layer:
+            // видны top и right side в ортографической проекции
+            {{-0.25, -0.65, +0.45}, {1.0, 0.0, 1.0}},  // 4
+            {{+0.65, -0.65, +0.45}, {0.0, 1.0, 1.0}},  // 5
+            {{+0.65, +0.25, +0.45}, {1.0, 1.0, 1.0}},  // 6
+            {{-0.25, +0.25, +0.45}, {0.3, 0.3, 0.3}},  // 7
+        },
+
+    .triangles =
+        {
+            // 1. Самая дальняя грань: z = -0.45
+            // Она должна быть нарисована первой.
+            {0, 2, 1},
+            {0, 3, 2},
+
+            // 3. Левая грань
+            {0, 4, 7},
+            {0, 7, 3},
+
+            // 4. Правая грань
+            {1, 2, 6},
+            {1, 6, 5},
+
+            // 5. Нижняя грань
+            {0, 1, 5},
+            {0, 5, 4},
+
+            // 6. Передняя грань: z = +0.45
+            // Обязательно последней: она перекроет дальние части,
+            // пока z-buffer ещё не реализован.
+            {4, 5, 6},
+            {4, 6, 7},
+
+            // 2. Верхняя грань: в проекции видна между двумя слоями.
+            {3, 7, 6},
+            {3, 6, 2},
+        },
+};
 
 // Методы для математики
 double Orientation(const Vec2D& a, const Vec2D& b, const Vec2D& c) {
@@ -109,6 +138,27 @@ BarycentricCoordinates GetBarycentricCoordinates(const Triangle& tr,
       Orientation(tr.c, tr.a, p) / cArea2,
       Orientation(tr.a, tr.b, p) / cArea2,
   };
+}
+
+void Project(const Mesh& mesh, std::vector<Triangle>& triangles,
+             const Framebuffer& buff) {
+  Triangle triangle;
+
+  for (const auto& tr : mesh.triangles) {
+    triangle.a = {(mesh.vertices[tr.i0].pos.x + 1) * buff.Width() / 2,
+                  (1 - mesh.vertices[tr.i0].pos.y) * buff.Height() / 2};
+
+    triangle.b = {(mesh.vertices[tr.i1].pos.x + 1) * buff.Width() / 2,
+                  (1 - mesh.vertices[tr.i1].pos.y) * buff.Height() / 2};
+
+    triangle.c = {(mesh.vertices[tr.i2].pos.x + 1) * buff.Width() / 2,
+                  (1 - mesh.vertices[tr.i2].pos.y) * buff.Height() / 2};
+
+    triangle.color = mesh.vertices[tr.i0]
+                         .color;  // Вот это очень тупо, но почему бы и нет пока
+
+    triangles.push_back(triangle);
+  }
 }
 
 // Методы для работы с Системой
@@ -156,9 +206,10 @@ void SaveImage(std::ostream& stream, const Framebuffer& buff) {
 }
 
 int main() {
-  std::vector<Triangle> triangles{cTriangle1, cTriangle2, cTriangle3,
-                                  cTriangle4};
+  std::vector<Triangle> triangles;
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
+
+  Project(cCube, triangles, buffer);
 
   // Ищем bounding box
   for (const auto& tr : triangles) {
@@ -176,7 +227,9 @@ int main() {
         BarycentricCoordinates bc = GetBarycentricCoordinates(tr, p);
 
         if (IsInside(bc)) {
-          buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC * bc.l3;
+          // buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC *
+          // bc.l3;
+          buffer.At(x, y) = tr.color;
         }
       }
     }
