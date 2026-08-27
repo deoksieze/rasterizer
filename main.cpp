@@ -7,7 +7,6 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "Framebuffer.h"
 
@@ -26,15 +25,36 @@ struct BarycentricCoordinates {
   double l3;
 };
 
-BarycentricCoordinates operator/(BarycentricCoordinates bc, double x) {
-  return BarycentricCoordinates{bc.l1 / x, bc.l2 / x, bc.l3 / x};
-}
-
 struct Triangle {
   Vec2D a;
   Vec2D b;
   Vec2D c;
 };
+
+struct BoundingBox {
+  int min_x;
+  int max_x;
+  int min_y;
+  int max_y;
+};
+
+BoundingBox FindBoundingBox(const Triangle& tr, const Framebuffer& buffer) {
+  const int cMinX = std::max(
+      0, static_cast<int>(std::floor(std::min({tr.a.x, tr.b.x, tr.c.x}))));
+
+  const int cMaxX =
+      std::min(buffer.Width(),
+               static_cast<int>(std::ceil(std::max({tr.a.x, tr.b.x, tr.c.x}))));
+
+  const int cMinY = std::max(
+      0, static_cast<int>(std::floor(std::min({tr.a.y, tr.b.y, tr.c.y}))));
+
+  const int cMaxY =
+      std::min(buffer.Height(),
+               static_cast<int>(std::ceil(std::max({tr.a.y, tr.b.y, tr.c.y}))));
+
+  return BoundingBox{cMinX, cMaxX, cMinY, cMaxY};
+}
 
 // Описание констант
 const int cImageWidth = 512;
@@ -42,27 +62,39 @@ const int cImageHeight = 512;
 const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
 
-const Vec2D cA = {10.0, 500.0};
-const Vec2D cB = {220.0, 460.0};
-const Vec2D cC = {400.0, 250.0};
+const Vec2D cA1 = {80.0, 80.0};
+const Vec2D cB1 = {250.0, 120.0};
+const Vec2D cC1 = {150.0, 300.0};
+
+const Triangle cTriangle1 = {cA1, cB1, cC1};
+
+const Vec2D cA2 = {380.0, 350.0};
+const Vec2D cB2 = {620.0, 430.0};
+const Vec2D cC2 = {450.0, 650.0};
+
+const Triangle cTriangle2 = {cA2, cB2, cC2};
+
+const Vec2D cA3 = {-300.0, 100.0};
+const Vec2D cB3 = {-80.0, 180.0};
+const Vec2D cC3 = {-120.0, 400.0};
+
+const Triangle cTriangle3 = {cA3, cB3, cC3};
+
+const Vec2D cA4 = {350.2, 120.4};
+const Vec2D cB4 = {400.8, 180.6};
+const Vec2D cC4 = {370.5, 300.3};
+
+const Triangle cTriangle4 = {cA4, cB4, cC4};
 
 const Color cColorA = {1.0, 0.0, 0.0};
 const Color cColorB = {0.0, 1.0, 0.0};
 const Color cColorC = {0.0, 0.0, 1.0};
 const Color cBackGroundColor = {64.0 / 255.0, 64.0 / 255.0, 64.0 / 255.0};
 
-const Triangle cTriangle = {cA, cB, cC};
-
 // Методы для математики
 double Orientation(const Vec2D& a, const Vec2D& b, const Vec2D& c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
-
-double SignedDoubleArea(const Triangle& tr) {
-  return Orientation(tr.a, tr.b, tr.c);
-}
-
-double CrossProduct(Vec2D a, Vec2D b) { return a.x * b.y - a.y * b.x; }
 
 bool IsInside(const BarycentricCoordinates& bc) {
   return bc.l1 >= 0.0 && bc.l2 >= 0.0 && bc.l3 >= 0.0;
@@ -124,21 +156,28 @@ void SaveImage(std::ostream& stream, const Framebuffer& buff) {
 }
 
 int main() {
+  std::vector<Triangle> triangles{cTriangle1, cTriangle2, cTriangle3,
+                                  cTriangle4};
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
-  // std::vector<std::vector<Color>> pixels(cImageHeight,
-  //                                        std::vector<Color>(cImageWidth));
 
-  for (int y = 0; y < buffer.Height(); y++) {
-    for (int x = 0; x < buffer.Width(); x++) {
-      buffer.At(x, y) = cBackGroundColor;
+  // Ищем bounding box
+  for (const auto& tr : triangles) {
+    BoundingBox box = FindBoundingBox(tr, buffer);
 
-      Vec2D p = {static_cast<double>(x) + cPixCentOffset,
-                 static_cast<double>(y) + cPixCentOffset};
+    if (box.max_x <= box.min_x || box.max_y <= box.min_y) {
+      continue;
+    }
 
-      BarycentricCoordinates bc = GetBarycentricCoordinates(cTriangle, p);
+    for (int y = box.min_y; y < box.max_y; y++) {
+      for (int x = box.min_x; x < box.max_x; x++) {
+        Vec2D p = {static_cast<double>(x) + cPixCentOffset,
+                   static_cast<double>(y) + cPixCentOffset};
 
-      if (IsInside(bc)) {
-        buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC * bc.l3;
+        BarycentricCoordinates bc = GetBarycentricCoordinates(tr, p);
+
+        if (IsInside(bc)) {
+          buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC * bc.l3;
+        }
       }
     }
   }
