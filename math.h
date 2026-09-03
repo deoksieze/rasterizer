@@ -1,5 +1,8 @@
 
 #include <array>
+#include <cmath>
+#include <numbers>
+#include <stdexcept>
 
 #include "Framebuffer.h"
 struct Vec4 {
@@ -7,6 +10,12 @@ struct Vec4 {
   double y;
   double z;
   double w;
+};
+
+struct Vec3 {
+  double x;
+  double y;
+  double z;
 };
 
 struct Vertex {
@@ -28,19 +37,16 @@ struct Mesh {
 template <int rows, int col>
 class Matrix {
  public:
-  Matrix() : height_(rows), width_(col), data_{} {}
+  Matrix() : data_{} {}
 
-  double& At(int row, int column) { return data_[width_ * row + column]; }
+  double& At(int row, int column) { return data_[col * row + column]; }
 
   const double& At(int row, int column) const {
-    return data_[width_ * row + column];
+    return data_[col * row + column];
   }
 
  private:
   std::array<double, rows * col> data_;
-
-  int height_;
-  int width_;
 };
 
 using Mat4 = Matrix<4, 4>;
@@ -79,4 +85,34 @@ Mat4 operator*(const Mat4& a, const Mat4& b) {
   }
 
   return c;
+}
+
+Mat4 MakePerspectiveMatrix(double vertical_fov_radians, double aspect_ratio,
+                           double near_plane, double far_plane) {
+  if (vertical_fov_radians <= 0.0 || vertical_fov_radians >= std::numbers::pi) {
+    throw std::invalid_argument("FOV must be in (0, pi)");
+  }
+
+  if (aspect_ratio <= 0.0) {
+    throw std::invalid_argument("Aspect ratio must be positive");
+  }
+
+  if (near_plane <= 0.0 || far_plane <= near_plane) {
+    throw std::invalid_argument("Expected 0 < nearPlane < farPlane");
+  }
+
+  const double cF = 1.0 / std::tan(vertical_fov_radians / 2.0);
+
+  Mat4 projection;  // ВАЖНО: Matrix() должен создавать нулевую матрицу.
+
+  projection.At(0, 0) = cF / aspect_ratio;
+  projection.At(1, 1) = cF;
+
+  projection.At(2, 2) = -(far_plane + near_plane) / (far_plane - near_plane);
+  projection.At(2, 3) =
+      -(2.0 * far_plane * near_plane) / (far_plane - near_plane);
+
+  projection.At(3, 2) = -1.0;
+
+  return projection;
 }
