@@ -110,7 +110,8 @@ Mat4 MakePerspectiveMatrix(double vertical_fov_radians, double aspect_ratio,
 
   projection.At(2, 2) = -(far_plane + near_plane) / (far_plane - near_plane);
   projection.At(2, 3) =
-      -(2.0 * far_plane * near_plane) / (far_plane - near_plane);
+      -(2.0 * far_plane * near_plane) /  // NOLINT(readability-magic-numbers)
+      (far_plane - near_plane);
 
   projection.At(3, 2) = -1.0;
 

@@ -65,6 +65,8 @@ const int cImageWidth = 512;
 const int cImageHeight = 512;
 const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
+const double cNearPlane = 0.1;
+const double cFarPlane = 100.0;
 
 const Color cColorA = {1.0, 0.0, 0.0};
 const Color cColorB = {0.0, 1.0, 0.0};
@@ -172,9 +174,9 @@ void PerspectiveProjection(const Mesh& mesh, std::vector<Triangle>& triangles,
 
   const double cAspect = static_cast<double>(cImageWidth) / cImageHeight;
 
-  const double cFovY = 60.0 * std::numbers::pi / 180.0;
+  const double cFovY = 90.0 * std::numbers::pi / 180.0;
 
-  Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, 0.1, 100.0);
+  Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
 
   for (const auto& tr : mesh.triangles) {
     triangle.a = ProjectVertex(mat, mesh.vertices[tr.i0].pos, buff);
