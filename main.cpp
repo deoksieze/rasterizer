@@ -28,10 +28,15 @@ struct BarycentricCoordinates {
   double l3;
 };
 
-struct Triangle {
-  Vec2 a;
-  Vec2 b;
-  Vec2 c;
+struct ScreenVertex {
+  Vec2 pos;
+  double depth;
+  // Color color;
+};
+struct ScreenTriangle {
+  ScreenVertex a;
+  ScreenVertex b;
+  ScreenVertex c;
   Color color;
 };
 
@@ -42,20 +47,23 @@ struct BoundingBox {
   int max_y;
 };
 
-BoundingBox FindBoundingBox(const Triangle& tr, const Framebuffer& buffer) {
-  const int cMinX = std::max(
-      0, static_cast<int>(std::floor(std::min({tr.a.x, tr.b.x, tr.c.x}))));
+BoundingBox FindBoundingBox(const ScreenTriangle& tr,
+                            const Framebuffer& buffer) {
+  Vec2 a = tr.a.pos;
+  Vec2 b = tr.b.pos;
+  Vec2 c = tr.c.pos;
 
-  const int cMaxX =
-      std::min(buffer.Width(),
-               static_cast<int>(std::ceil(std::max({tr.a.x, tr.b.x, tr.c.x}))));
+  const int cMinX =
+      std::max(0, static_cast<int>(std::floor(std::min({a.x, b.x, c.x}))));
 
-  const int cMinY = std::max(
-      0, static_cast<int>(std::floor(std::min({tr.a.y, tr.b.y, tr.c.y}))));
+  const int cMaxX = std::min(
+      buffer.Width(), static_cast<int>(std::ceil(std::max({a.x, b.x, c.x}))));
 
-  const int cMaxY =
-      std::min(buffer.Height(),
-               static_cast<int>(std::ceil(std::max({tr.a.y, tr.b.y, tr.c.y}))));
+  const int cMinY =
+      std::max(0, static_cast<int>(std::floor(std::min({a.y, b.y, c.y}))));
+
+  const int cMaxY = std::min(
+      buffer.Height(), static_cast<int>(std::ceil(std::max({a.y, b.y, c.y}))));
 
   return BoundingBox{cMinX, cMaxX, cMinY, cMaxY};
 }
@@ -94,10 +102,6 @@ const Mesh cCube{
 
     .triangles =
         {
-            // 1. Самая дальняя грань. Рисуем первой.
-            {0, 2, 1},
-            {0, 3, 2},
-
             // 2. Стороны, соединяющие дальний и ближний слои.
             // Пока z-buffer отсутствует, они должны быть до front face.
             {0, 4, 7},
@@ -117,6 +121,40 @@ const Mesh cCube{
             // как в твоём текущем порядке.
             {3, 7, 6},
             {3, 6, 2},
+
+            // 1. Самая дальняя грань. Рисуем первой.
+            {0, 2, 1},
+            {0, 3, 2},
+        },
+};
+
+const Mesh cIntersectingTriangles{
+    .vertices =
+        {
+            // Triangle 1: красный.
+            // Его глубина меняется слева направо:
+            // слева он ближе к камере, справа — дальше.
+            {{-1.20, -0.85, -2.00, 1.0}, {1.0, 0.0, 0.0}},  // 0
+            {{+1.20, -0.85, -5.00, 1.0}, {1.0, 0.0, 0.0}},  // 1
+            {{+0.00, +1.10, -3.50, 1.0}, {1.0, 0.0, 0.0}},  // 2
+
+            // Triangle 2: зелёный.
+            // Его глубина меняется в противоположную сторону:
+            // справа он ближе, слева — дальше.
+            {{-1.20, +0.70, -5.00, 1.0}, {0.0, 1.0, 0.0}},  // 3
+            {{+1.20, +0.70, -2.00, 1.0}, {0.0, 1.0, 0.0}},  // 4
+            {{+0.00, -1.10, -3.50, 1.0}, {0.0, 1.0, 0.0}},  // 5
+        },
+
+    .triangles =
+        {
+            // Красный triangle рисуется первым.
+            {0, 1, 2},
+
+            // Зелёный — вторым.
+            // Без z-buffer он полностью перекроет красный
+            // во всей общей области screen-space.
+            {3, 4, 5},
         },
 };
 
@@ -129,60 +167,43 @@ bool IsInside(const BarycentricCoordinates& bc) {
   return bc.l1 >= 0.0 && bc.l2 >= 0.0 && bc.l3 >= 0.0;
 }
 
-BarycentricCoordinates GetBarycentricCoordinates(const Triangle& tr,
+BarycentricCoordinates GetBarycentricCoordinates(const ScreenTriangle& tr,
                                                  const Vec2& p) {
-  const double cArea2 = Orientation(tr.a, tr.b, tr.c);
+  const double cArea2 = Orientation(tr.a.pos, tr.b.pos, tr.c.pos);
 
   return {
-      Orientation(tr.b, tr.c, p) / cArea2,
-      Orientation(tr.c, tr.a, p) / cArea2,
-      Orientation(tr.a, tr.b, p) / cArea2,
+      Orientation(tr.b.pos, tr.c.pos, p) / cArea2,
+      Orientation(tr.c.pos, tr.a.pos, p) / cArea2,
+      Orientation(tr.a.pos, tr.b.pos, p) / cArea2,
   };
 }
 
-void Project(const Mesh& mesh, std::vector<Triangle>& triangles,
-             const Framebuffer& buff) {
-  Triangle triangle;
-
-  for (const auto& tr : mesh.triangles) {
-    triangle.a = {(mesh.vertices[tr.i0].pos.x + 1) * buff.Width() / 2,
-                  (1 - mesh.vertices[tr.i0].pos.y) * buff.Height() / 2};
-
-    triangle.b = {(mesh.vertices[tr.i1].pos.x + 1) * buff.Width() / 2,
-                  (1 - mesh.vertices[tr.i1].pos.y) * buff.Height() / 2};
-
-    triangle.c = {(mesh.vertices[tr.i2].pos.x + 1) * buff.Width() / 2,
-                  (1 - mesh.vertices[tr.i2].pos.y) * buff.Height() / 2};
-
-    triangle.color = mesh.vertices[tr.i0]
-                         .color;  // Вот это очень тупо, но почему бы и нет пока
-
-    triangles.push_back(triangle);
-  }
-}
-
-Vec2 ProjectVertex(const Mat4& mat, const Vec4& vec, const Framebuffer& buff) {
+void ProjectVertex(ScreenVertex& ver_to_project, const Mat4& mat,
+                   const Vec4& vec, const Framebuffer& buff) {
   Vec4 v = mat * vec;
-  Vec3 ncd_position{v.x / v.w, v.y / v.w, v.z / v.w};
-  return Vec2{(ncd_position.x + 1.0) / 2 * buff.Width(),
-              (1.0 - ncd_position.y) / 2 * buff.Height()};
+  Vec3 ndc_position{v.x / v.w, v.y / v.w, v.z / v.w};
+  ver_to_project.pos = Vec2{(ndc_position.x + 1.0) / 2 * buff.Width(),
+                            (1.0 - ndc_position.y) / 2 * buff.Height()};
+  ver_to_project.depth = ndc_position.z;
 }
 
-void PerspectiveProjection(const Mesh& mesh, std::vector<Triangle>& triangles,
-                           const Framebuffer& buff) {
-  Triangle triangle;
+void ProjectMeshToScreen(const Mesh& mesh,
+                         std::vector<ScreenTriangle>& triangles,
+                         const Framebuffer& buff) {
+  ScreenTriangle triangle;
 
-  const double cAspect = static_cast<double>(cImageWidth) / cImageHeight;
+  const double cAspect = static_cast<double>(buff.Width()) / buff.Height();
 
-  const double cFovY = 90.0 * std::numbers::pi / 180.0;
+  const double cFovY = 60.0 * std::numbers::pi / 180.0;
 
   Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
 
   for (const auto& tr : mesh.triangles) {
-    triangle.a = ProjectVertex(mat, mesh.vertices[tr.i0].pos, buff);
-    triangle.b = ProjectVertex(mat, mesh.vertices[tr.i1].pos, buff);
-    triangle.c = ProjectVertex(mat, mesh.vertices[tr.i2].pos, buff);
-    triangle.color = mesh.vertices[tr.i0].color;
+    ProjectVertex(triangle.a, mat, mesh.vertices[tr.i0].pos, buff);
+    ProjectVertex(triangle.b, mat, mesh.vertices[tr.i1].pos, buff);
+    ProjectVertex(triangle.c, mat, mesh.vertices[tr.i2].pos, buff);
+    triangle.color =
+        mesh.vertices[tr.i0].color;  // Временно работаю так с цветом
 
     triangles.push_back(triangle);
   }
@@ -233,10 +254,11 @@ void SaveImage(std::ostream& stream, const Framebuffer& buff) {
 }
 
 int main() {
-  std::vector<Triangle> triangles;
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
 
-  PerspectiveProjection(cCube, triangles, buffer);
+  std::vector<ScreenTriangle> triangles;
+  triangles.clear();
+  ProjectMeshToScreen(cIntersectingTriangles, triangles, buffer);
 
   // Ищем bounding box
   for (const auto& tr : triangles) {
@@ -254,9 +276,15 @@ int main() {
         BarycentricCoordinates bc = GetBarycentricCoordinates(tr, p);
 
         if (IsInside(bc)) {
-          // buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC *
-          // bc.l3;
-          buffer.At(x, y) = tr.color;
+          double depth =
+              bc.l1 * tr.a.depth + bc.l2 * tr.b.depth + bc.l3 * tr.c.depth;
+
+          if (buffer.PassDepthTest(depth, x, y)) {
+            // buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC *
+            // bc.l3;
+            buffer.DepthAt(x, y) = depth;
+            buffer.At(x, y) = tr.color;
+          }
         }
       }
     }
