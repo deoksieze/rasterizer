@@ -71,6 +71,8 @@ BoundingBox FindBoundingBox(const ScreenTriangle& tr,
 // Описание констант
 const int cImageWidth = 512;
 const int cImageHeight = 512;
+const bool cCullBackFaces = true;
+
 const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
 const double cNearPlane = 0.1;
@@ -102,6 +104,10 @@ const Mesh cCube{
 
     .triangles =
         {
+
+            // 3. Ближняя грань: рисуется после дальних граней.
+            {4, 5, 6},
+            {4, 6, 7},
             // 2. Стороны, соединяющие дальний и ближний слои.
             // Пока z-buffer отсутствует, они должны быть до front face.
             {0, 4, 7},
@@ -112,10 +118,6 @@ const Mesh cCube{
 
             {0, 1, 5},
             {0, 5, 4},
-
-            // 3. Ближняя грань: рисуется после дальних граней.
-            {4, 5, 6},
-            {4, 6, 7},
 
             // 4. Верхняя грань остаётся последней,
             // как в твоём текущем порядке.
@@ -161,6 +163,10 @@ const Mesh cIntersectingTriangles{
 // Методы для математики
 double Orientation(const Vec2& a, const Vec2& b, const Vec2& c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+bool IsFrontFacing(const ScreenTriangle& tr) {
+  return Orientation(tr.a.pos, tr.b.pos, tr.c.pos) < 0;
 }
 
 bool IsInside(const BarycentricCoordinates& bc) {
@@ -258,10 +264,14 @@ int main() {
 
   std::vector<ScreenTriangle> triangles;
   triangles.clear();
-  ProjectMeshToScreen(cIntersectingTriangles, triangles, buffer);
+  ProjectMeshToScreen(cCube, triangles, buffer);
 
   // Ищем bounding box
   for (const auto& tr : triangles) {
+    if (!IsFrontFacing(tr) && cCullBackFaces) {
+      continue;
+    }
+
     BoundingBox box = FindBoundingBox(tr, buffer);
 
     if (box.max_x <= box.min_x || box.max_y <= box.min_y) {
