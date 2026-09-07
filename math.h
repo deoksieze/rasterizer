@@ -12,6 +12,42 @@ struct Vec4 {
   double w;
 };
 
+Vec4 operator+(Vec4 a, const Vec4& b) {
+  a.x += b.x;
+  a.y += b.y;
+  a.z += b.z;
+  a.w += b.w;
+  return a;
+}
+
+
+Vec4 operator-(Vec4 a, const Vec4& b) {
+  a.x -= b.x;
+  a.y -= b.y;
+  a.z -= b.z;
+  a.w -= b.w;
+  return a;
+}
+
+
+Vec4 operator*(Vec4 v, double scalar) {
+  v.x *= scalar;
+  v.y *= scalar;
+  v.z *= scalar;
+  v.w *= scalar;
+  return v;
+}
+
+
+Vec4 operator*(double scalar, Vec4 v) {
+  return v * scalar;
+}
+
+
+Vec4 Lerp(const Vec4& from, const Vec4& to, double t) {
+  return from + t * (to - from);
+}
+
 struct Vec3 {
   double x;
   double y;

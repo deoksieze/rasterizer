@@ -31,6 +31,18 @@ Color operator+(Color c1, Color c2) {
   return Color{c1.r + c2.r, c1.g + c2.g, c1.b + c2.b};
 }
 
+Color operator-(Color lhs, const Color& rhs) {
+  return {
+      lhs.r - rhs.r,
+      lhs.g - rhs.g,
+      lhs.b - rhs.b,
+  };
+}
+
+Color Lerp(const Color& from, const Color& to, double t) {
+  return from + t * (to - from);
+}
+
 class Framebuffer {
  public:
   Framebuffer(int width, int height, Color clear_color)
