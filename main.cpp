@@ -255,35 +255,6 @@ BarycentricCoordinates GetBarycentricCoordinates(const ScreenTriangle& tr,
   };
 }
 
-void ProjectVertex(ScreenVertex& ver_to_project, const Mat4& mat,
-                   const Vec4& vec, const Framebuffer& buff) {
-  Vec4 v = mat * vec;
-  Vec3 ndc_position{v.x / v.w, v.y / v.w, v.z / v.w};
-  ver_to_project.pos = Vec2{(ndc_position.x + 1.0) / 2 * buff.Width(),
-                            (1.0 - ndc_position.y) / 2 * buff.Height()};
-  ver_to_project.depth = ndc_position.z;
-}
-
-void ProjectMeshToScreen(const Mesh& mesh,
-                         std::vector<ScreenTriangle>& triangles,
-                         const Framebuffer& buff) {
-  ScreenTriangle triangle;
-
-  const double cAspect = static_cast<double>(buff.Width()) / buff.Height();
-
-  Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
-
-  for (const auto& tr : mesh.triangles) {
-    ProjectVertex(triangle.a, mat, mesh.vertices[tr.i0].pos, buff);
-    ProjectVertex(triangle.b, mat, mesh.vertices[tr.i1].pos, buff);
-    ProjectVertex(triangle.c, mat, mesh.vertices[tr.i2].pos, buff);
-    triangle.color =
-        mesh.vertices[tr.i0].color;  // Временно работаю так с цветом
-
-    triangles.push_back(triangle);
-  }
-}
-
 void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& P,  // NOLINT
                                   std::vector<ClipTriangle>& clip_triangles) {
   clip_triangles.clear();  // ХЗ оставить это так или нет
@@ -435,7 +406,6 @@ int main() {
   const double cAspect = static_cast<double>(buffer.Width()) / buffer.Height();
   Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
 
-  // ProjectMeshToScreen(cCube, triangles, buffer);
   std::vector<ClipTriangle> clip_triangles{};
   std::vector<ClipTriangle> clipped_triangles{};
   std::vector<ScreenTriangle> triangles;
