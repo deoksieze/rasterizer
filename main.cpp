@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
@@ -58,6 +59,15 @@ struct ClipTriangle {
   ClipVertex c;
 };
 
+struct ClipPlane {
+  Vec4 coeff;
+
+  double operator()(const ClipVertex& vertex) const {
+    return vertex.pos.x * coeff.x + vertex.pos.y * coeff.y +
+           vertex.pos.z * coeff.z + vertex.pos.w * coeff.w;
+  }
+};
+
 struct BoundingBox {
   int min_x;
   int max_x;
@@ -96,6 +106,15 @@ const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
 const double cNearPlane = 0.1;
 const double cFarPlane = 100.0;
+
+const std::array<ClipPlane, 6> cClipPlanes = {{
+    {{1.0, 0.0, 0.0, 1.0}},   // left   (x + w >= 0)
+    {{-1.0, 0.0, 0.0, 1.0}},  // right  (w - x >= 0)
+    {{0.0, 1.0, 0.0, 1.0}},   // bottom (y + w >= 0)
+    {{0.0, -1.0, 0.0, 1.0}},  // top    (w - y >= 0)
+    {{0.0, 0.0, 1.0, 1.0}},   // near   (z + w >= 0)
+    {{0.0, 0.0, -1.0, 1.0}},  // far    (w - z >= 0)
+}};
 
 const Color cColorA = {1.0, 0.0, 0.0};
 const Color cColorB = {0.0, 1.0, 0.0};
@@ -208,8 +227,8 @@ const Mesh cNearPlaneClippingTests{
             // после triangulation: 2 triangles.
             // Синий triangle, расположен слева снизу.
             // ------------------------------------------------------------
-            {{-1.35, 2, -4.00, 1.0}, {0.0, 0.0, 1.0}},  // 6: inside
-            {{1.45, -1.50, -2.00, 1.0}, {0.0, 0.0, 1.0}},  // 7: inside
+            {{-1.35, 2, -4.00, 1.0}, {0.0, 0.0, 1.0}},      // 6: inside
+            {{1.45, -1.50, -2.00, 1.0}, {0.0, 0.0, 1.0}},   // 7: inside
             {{-0.90, -0.20, -0.05, 1.0}, {0.0, 0.0, 1.0}},  // 8: outside
 
             // ------------------------------------------------------------
@@ -274,44 +293,60 @@ void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& P,  // NOLINT
   }
 }
 
+template <typename Func>
+void ShClip(Func signed_distance_to_plane,
+            std::vector<ClipVertex>& clip_polygon) {
+  const std::vector<ClipVertex> cInput = clip_polygon;
+  clip_polygon.clear();
+
+  if (cInput.empty()) {
+    return;
+  }
+
+  ClipVertex prev = cInput.back();
+  for (ClipVertex curr : cInput) {
+    const auto IsInsidePlane = [&](const ClipVertex& vertex) {  // NOLINT
+      return signed_distance_to_plane(vertex) >= 0.0;
+    };
+
+    const double cDPrev = signed_distance_to_plane(prev);
+    const double cDCurr = signed_distance_to_plane(curr);
+    bool prev_inside = IsInsidePlane(prev);
+    bool curr_inside = IsInsidePlane(curr);
+
+    if (prev_inside && curr_inside) {
+      clip_polygon.push_back(curr);
+    }
+
+    else if (prev_inside && !curr_inside) {
+      double t = cDPrev / (cDPrev - cDCurr);
+      clip_polygon.push_back(Lerp(prev, curr, t));
+    }
+
+    else if (!prev_inside && curr_inside) {
+      double t = cDPrev / (cDPrev - cDCurr);
+      clip_polygon.push_back(Lerp(prev, curr, t));
+      clip_polygon.push_back(curr);
+    }
+
+    prev = curr;
+  }
+}
+
 void ClipTriangles(const std::vector<ClipTriangle>& clip_triangles,
                    std::vector<ClipTriangle>& clipped_clip_triangles) {
   clipped_clip_triangles.clear();
 
-  const auto SignedDistanceToNearPlane =  // NOLINT
-      [](const ClipVertex& vertex) { return vertex.pos.z + vertex.pos.w; };
-
-  const auto IsInsideNearPlane = [&](const ClipVertex& vertex) {  // NOLINT
-    return SignedDistanceToNearPlane(vertex) >= 0.0;
-  };
   std::vector<ClipVertex> clip_polygon;
 
   for (const ClipTriangle& tr : clip_triangles) {
-    clip_polygon.clear();
-    std::vector<ClipVertex> input = {tr.a, tr.b, tr.c};
-    ClipVertex prev = input.back();
-    for (ClipVertex curr : input) {
-      const double cDPrev = SignedDistanceToNearPlane(prev);
-      const double cDCurr = SignedDistanceToNearPlane(curr);
-      bool prev_inside = IsInsideNearPlane(prev);
-      bool curr_inside = IsInsideNearPlane(curr);
+    clip_polygon = {tr.a, tr.b, tr.c};
 
-      if (prev_inside && curr_inside) {
-        clip_polygon.push_back(curr);
+    for (const ClipPlane& plane : cClipPlanes) {
+      ShClip(plane, clip_polygon);
+      if (clip_polygon.size() < 3) {
+        break;
       }
-
-      else if (prev_inside && !curr_inside) {
-        double t = cDPrev / (cDPrev - cDCurr);
-        clip_polygon.push_back(Lerp(prev, curr, t));
-      }
-
-      else if (!prev_inside && curr_inside) {
-        double t = cDPrev / (cDPrev - cDCurr);
-        clip_polygon.push_back(Lerp(prev, curr, t));
-        clip_polygon.push_back(curr);
-      }
-
-      prev = curr;
     }
 
     if (clip_polygon.size() < 3) {
