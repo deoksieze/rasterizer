@@ -20,7 +20,6 @@ Vec4 operator+(Vec4 a, const Vec4& b) {
   return a;
 }
 
-
 Vec4 operator-(Vec4 a, const Vec4& b) {
   a.x -= b.x;
   a.y -= b.y;
@@ -28,7 +27,6 @@ Vec4 operator-(Vec4 a, const Vec4& b) {
   a.w -= b.w;
   return a;
 }
-
 
 Vec4 operator*(Vec4 v, double scalar) {
   v.x *= scalar;
@@ -38,11 +36,7 @@ Vec4 operator*(Vec4 v, double scalar) {
   return v;
 }
 
-
-Vec4 operator*(double scalar, Vec4 v) {
-  return v * scalar;
-}
-
+Vec4 operator*(double scalar, Vec4 v) { return v * scalar; }
 
 Vec4 Lerp(const Vec4& from, const Vec4& to, double t) {
   return from + t * (to - from);
@@ -54,9 +48,39 @@ struct Vec3 {
   double z;
 };
 
-struct Vertex {
+struct Vec2 {
+  double x;
+  double y;
+};
+
+Vec2 operator-(Vec2 a, Vec2 b) { return Vec2{a.x - b.x, a.y - b.y}; }
+
+Vec2 operator+(Vec2 a, const Vec2& b) {
+  a.x += b.x;
+  a.y += b.y;
+  return a;
+}
+
+Vec2 operator*(Vec2 v, double scalar) {
+  v.x *= scalar;
+  v.y *= scalar;
+  return v;
+}
+
+Vec2 operator/(Vec2 v, double scalar) {
+  return v * (1 / scalar);
+}
+
+Vec2 operator*(double scalar, Vec2 v) { return v * scalar; }
+
+Vec2 Lerp(const Vec2& from, const Vec2& to, double t) {
+  return from + t * (to - from);
+}
+
+struct MeshVertex {
   Vec4 pos;
   Color color;
+  Vec2 uv;
 };
 
 struct TriangleMesh {
@@ -66,7 +90,7 @@ struct TriangleMesh {
 };
 
 struct Mesh {
-  std::vector<Vertex> vertices;
+  std::vector<MeshVertex> vertices;
   std::vector<TriangleMesh> triangles;
 };
 

@@ -15,14 +15,6 @@
 #include "math.h"
 
 namespace fs = std::filesystem;
-
-struct Vec2 {
-  double x;
-  double y;
-};
-
-Vec2 operator-(Vec2 a, Vec2 b) { return Vec2{a.x - b.x, a.y - b.y}; }
-
 struct BarycentricCoordinates {
   double l1;
   double l2;
@@ -32,7 +24,9 @@ struct BarycentricCoordinates {
 struct ScreenVertex {
   Vec2 pos;
   double depth;
-  // Color color;
+  Color color;
+  Vec2 uv;
+  double inv_w;
 };
 struct ScreenTriangle {
   ScreenVertex a;
@@ -44,13 +38,13 @@ struct ScreenTriangle {
 struct ClipVertex {
   Vec4 pos;
   Color color;
+  Vec2 uv;
 };
 
 ClipVertex Lerp(const ClipVertex& from, const ClipVertex& to, double t) {
-  return {
-      .pos = Lerp(from.pos, to.pos, t),
-      .color = Lerp(from.color, to.color, t),
-  };
+  return {.pos = Lerp(from.pos, to.pos, t),
+          .color = Lerp(from.color, to.color, t),
+          .uv = Lerp(from.uv, to.uv, t)};
 }
 
 struct ClipTriangle {
@@ -127,17 +121,17 @@ const Mesh cCube{
             // Back / far layer: z = -3.45.
             // Все вершины гарантированно перед камерой,
             // которая смотрит вдоль -Z.
-            {{-0.65, -0.35, -3.45, 1.0}, {1.0, 0.0, 0.0}},  // 0
-            {{+0.25, -0.35, -3.45, 1.0}, {0.0, 1.0, 0.0}},  // 1
-            {{+0.25, +0.55, -3.45, 1.0}, {0.0, 0.0, 1.0}},  // 2
-            {{-0.65, +0.55, -3.45, 1.0}, {1.0, 1.0, 0.0}},  // 3
+            {{-0.65, -0.35, -2.45, 1.0}, {1.0, 0.0, 0.0}, {1.0, 1.0}},  // 0
+            {{+0.25, -0.35, -2.45, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 1
+            {{+0.25, +0.55, -2.45, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 2
+            {{-0.65, +0.55, -2.45, 1.0}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 3
 
             // Front / near layer: z = -2.55.
             // Вершины расположены ближе к камере, чем back layer.
-            {{-0.25, -0.65, -2.55, 1.0}, {1.0, 0.0, 1.0}},  // 4
-            {{+0.65, -0.65, -2.55, 1.0}, {0.0, 1.0, 1.0}},  // 5
-            {{+0.65, +0.25, -2.55, 1.0}, {1.0, 1.0, 1.0}},  // 6
-            {{-0.25, +0.25, -2.55, 1.0}, {0.3, 0.3, 0.3}},  // 7
+            {{-0.25, -0.65, -1.55, 1.0}, {1.0, 0.0, 1.0}, {0.0, 0.0}},  // 4
+            {{+0.65, -0.65, -1.55, 1.0}, {0.0, 1.0, 1.0}, {1.0, 0.0}},  // 5
+            {{+0.65, +0.25, -1.55, 1.0}, {1.0, 1.0, 1.0}, {1.0, 1.0}},  // 6
+            {{-0.25, +0.25, -1.55, 1.0}, {0.3, 0.3, 0.3}, {0.0, 1.0}},  // 7
         },
 
     .triangles =
@@ -174,16 +168,16 @@ const Mesh cIntersectingTriangles{
             // Triangle 1: красный.
             // Его глубина меняется слева направо:
             // слева он ближе к камере, справа — дальше.
-            {{-1.20, -0.85, -2.00, 1.0}, {1.0, 0.0, 0.0}},  // 0
-            {{+1.20, -0.85, -5.00, 1.0}, {1.0, 0.0, 0.0}},  // 1
-            {{+0.00, +1.10, -3.50, 1.0}, {1.0, 0.0, 0.0}},  // 2
+            {{-1.20, -0.85, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
+            {{+1.20, -0.85, -5.00, 1.0}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
+            {{+0.00, +1.10, -3.50, 1.0}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
 
             // Triangle 2: зелёный.
             // Его глубина меняется в противоположную сторону:
             // справа он ближе, слева — дальше.
-            {{-1.20, +0.70, -5.00, 1.0}, {0.0, 1.0, 0.0}},  // 3
-            {{+1.20, +0.70, -2.00, 1.0}, {0.0, 1.0, 0.0}},  // 4
-            {{+0.00, -1.10, -3.50, 1.0}, {0.0, 1.0, 0.0}},  // 5
+            {{-1.20, +0.70, -5.00, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 3
+            {{+1.20, +0.70, -2.00, 1.0}, {0.0, 1.0, 0.0}, {1.0, 1.0}},  // 4
+            {{+0.00, -1.10, -3.50, 1.0}, {0.0, 1.0, 0.0}, {0.5, 0.0}},  // 5
         },
 
     .triangles =
@@ -198,6 +192,34 @@ const Mesh cIntersectingTriangles{
         },
 };
 
+const Mesh cTiltedSquare{
+    .vertices =
+        {
+            // Квадрат (quad) из двух треугольников, лежит в плоскости XZ
+            // (пол). Верхняя сторона расположена ближе к камере
+            // (z = -1.5), нижняя — дальше (z = -3.0). Матрица UV покрывает
+            // весь [0,1]^2, поэтому текстура растягивается на весь квадрат.
+            {{-0.70, +0.20, -1.50, 1.0},
+             {1.0, 1.0, 1.0},
+             {0.0, 1.0}},  // 0: ближний левый
+            {{+0.70, +0.20, -1.50, 1.0},
+             {1.0, 1.0, 1.0},
+             {1.0, 1.0}},  // 1: ближний правый
+            {{+0.70, -0.70, -3.00, 1.0},
+             {1.0, 1.0, 1.0},
+             {1.0, 0.0}},  // 2: дальний правый
+            {{-0.70, -0.70, -3.00, 1.0},
+             {1.0, 1.0, 1.0},
+             {0.0, 0.0}},  // 3: дальний левый
+        },
+
+    .triangles =
+        {
+            {0, 1, 2},
+            {0, 2, 3},
+        },
+};
+
 const Mesh cNearPlaneClippingTests{
     .vertices =
         {
@@ -206,9 +228,9 @@ const Mesh cNearPlaneClippingTests{
             // Ожидается: один исходный triangle проходит без изменения.
             // Красный triangle, расположен слева сверху.
             // ------------------------------------------------------------
-            {{-1.40, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}},  // 0
-            {{-0.45, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}},  // 1
-            {{-0.90, +1.05, -2.00, 1.0}, {1.0, 0.0, 0.0}},  // 2
+            {{-1.40, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
+            {{-0.45, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
+            {{-0.90, +1.05, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
 
             // ------------------------------------------------------------
             // Test 2: ровно 1 вершина inside, 2 outside.
@@ -217,9 +239,15 @@ const Mesh cNearPlaneClippingTests{
             // - двух пересечений с near plane.
             // Зелёный triangle, расположен справа сверху.
             // ------------------------------------------------------------
-            {{+0.90, +0.01, -2.00, 1.0}, {0.0, 1.0, 0.0}},  // 3: inside
-            {{+0.35, +0.15, -0.05, 1.0}, {0.0, 1.0, 0.0}},  // 4: outside
-            {{+1.45, +0.15, -0.05, 1.0}, {0.0, 1.0, 0.0}},  // 5: outside
+            {{+0.90, +0.01, -2.00, 1.0},
+             {0.0, 1.0, 0.0},
+             {0.0, 0.0}},  // 3: inside
+            {{+0.35, +0.15, -0.05, 1.0},
+             {0.0, 1.0, 0.0},
+             {1.0, 0.0}},  // 4: outside
+            {{+1.45, +0.15, -0.05, 1.0},
+             {0.0, 1.0, 0.0},
+             {0.5, 1.0}},  // 5: outside
 
             // ------------------------------------------------------------
             // Test 3: ровно 2 вершины inside, 1 outside.
@@ -227,18 +255,22 @@ const Mesh cNearPlaneClippingTests{
             // после triangulation: 2 triangles.
             // Синий triangle, расположен слева снизу.
             // ------------------------------------------------------------
-            {{-1.35, 2, -4.00, 1.0}, {0.0, 0.0, 1.0}},      // 6: inside
-            {{1.45, -1.50, -2.00, 1.0}, {0.0, 0.0, 1.0}},   // 7: inside
-            {{-0.90, -0.20, -0.05, 1.0}, {0.0, 0.0, 1.0}},  // 8: outside
+            {{-1.35, 2, -4.00, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 6: inside
+            {{1.45, -1.50, -2.00, 1.0},
+             {0.0, 0.0, 1.0},
+             {1.0, 0.0}},  // 7: inside
+            {{-0.90, -0.20, -0.05, 1.0},
+             {0.0, 0.0, 1.0},
+             {0.5, 1.0}},  // 8: outside
 
             // ------------------------------------------------------------
             // Test 4: все 3 вершины outside.
             // Ожидается: 0 output triangles, ничего не рисуется.
             // Жёлтый triangle, расположен справа снизу.
             // ------------------------------------------------------------
-            {{+0.45, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}},  // 9
-            {{+1.35, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}},  // 10
-            {{+0.90, -0.20, -0.05, 1.0}, {1.0, 1.0, 0.0}},  // 11
+            {{+0.45, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}, {0.0, 0.0}},  // 9
+            {{+1.35, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 10
+            {{+0.90, -0.20, -0.05, 1.0}, {1.0, 1.0, 0.0}, {0.5, 1.0}},  // 11
         },
 
     .triangles =
@@ -282,12 +314,15 @@ void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& P,  // NOLINT
   for (const auto& tr : mesh.triangles) {
     clip_triangle.a.pos = P * mesh.vertices[tr.i0].pos;
     clip_triangle.a.color = mesh.vertices[tr.i0].color;
+    clip_triangle.a.uv = mesh.vertices[tr.i0].uv;
 
     clip_triangle.b.pos = P * mesh.vertices[tr.i1].pos;
     clip_triangle.b.color = mesh.vertices[tr.i1].color;
+    clip_triangle.b.uv = mesh.vertices[tr.i1].uv;
 
     clip_triangle.c.pos = P * mesh.vertices[tr.i2].pos;
     clip_triangle.c.color = mesh.vertices[tr.i2].color;
+    clip_triangle.c.uv = mesh.vertices[tr.i2].uv;
 
     clip_triangles.push_back(clip_triangle);
   }
@@ -368,12 +403,16 @@ void ClipTriangles(const std::vector<ClipTriangle>& clip_triangles,
   }
 }
 
-void ProjectVertexToScreen(ScreenVertex& ver_to_project, const Vec4& v,
+void ProjectVertexToScreen(ScreenVertex& ver_to_project, const ClipVertex& ver,
                            const Framebuffer& buff) {
+  const Vec4& v = ver.pos;
   Vec3 ndc_position{v.x / v.w, v.y / v.w, v.z / v.w};
   ver_to_project.pos = Vec2{(ndc_position.x + 1.0) / 2 * buff.Width(),
                             (1.0 - ndc_position.y) / 2 * buff.Height()};
   ver_to_project.depth = ndc_position.z;
+  ver_to_project.color = ver.color;
+  ver_to_project.inv_w = 1 / ver.pos.w;
+  ver_to_project.uv = ver.uv * ver_to_project.inv_w;
 }
 
 void ProjectClippedTrianglesToScreen(
@@ -382,13 +421,31 @@ void ProjectClippedTrianglesToScreen(
   ScreenTriangle triangle;
 
   for (const auto& tr : clipped_triangles) {
-    ProjectVertexToScreen(triangle.a, tr.a.pos, buff);
-    ProjectVertexToScreen(triangle.b, tr.b.pos, buff);
-    ProjectVertexToScreen(triangle.c, tr.c.pos, buff);
+    ProjectVertexToScreen(triangle.a, tr.a, buff);
+    ProjectVertexToScreen(triangle.b, tr.b, buff);
+    ProjectVertexToScreen(triangle.c, tr.c, buff);
     triangle.color = tr.a.color;  // Временно работаю так с цветом
 
     triangles.push_back(triangle);
   }
+}
+
+// Временный метод для создания шахматно-подобной текстуры
+Color SampleCheckerboard(Vec2 uv) {
+  constexpr int cKCellsPerAxis = 8;
+
+  uv.x = std::clamp(uv.x, 0.0, 1.0);
+  uv.y = std::clamp(uv.y, 0.0, 1.0);
+
+  const int cEllX =
+      std::min(cKCellsPerAxis - 1, static_cast<int>(uv.x * cKCellsPerAxis));
+
+  const int cEllY =
+      std::min(cKCellsPerAxis - 1, static_cast<int>(uv.y * cKCellsPerAxis));
+
+  const bool cIsLight = ((cEllX + cEllY) % 2) == 0;
+
+  return cIsLight ? Color{1.0, 1.0, 1.0} : Color{0.0, 0.0, 0.0};
 }
 
 // Методы для работы с Системой
@@ -439,12 +496,14 @@ int main() {
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
 
   const double cAspect = static_cast<double>(buffer.Width()) / buffer.Height();
+  const Mesh& c_scene_mesh = cCube;
+
   Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
 
   std::vector<ClipTriangle> clip_triangles{};
   std::vector<ClipTriangle> clipped_triangles{};
   std::vector<ScreenTriangle> triangles;
-  TransformMeshToClipTriangles(cNearPlaneClippingTests, mat, clip_triangles);
+  TransformMeshToClipTriangles(c_scene_mesh, mat, clip_triangles);
   ClipTriangles(clip_triangles, clipped_triangles);
   ProjectClippedTrianglesToScreen(clipped_triangles, triangles, buffer);
 
@@ -459,7 +518,7 @@ int main() {
     if (box.max_x <= box.min_x || box.max_y <= box.min_y) {
       continue;
     }
-
+    // buffer.At(x, y) = tr.a.uv
     for (int y = box.min_y; y < box.max_y; y++) {
       for (int x = box.min_x; x < box.max_x; x++) {
         Vec2 p = {static_cast<double>(x) + cPixCentOffset,
@@ -475,7 +534,15 @@ int main() {
             // buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC *
             // bc.l3;
             buffer.DepthAt(x, y) = depth;
-            buffer.At(x, y) = tr.color;
+
+            double q =
+                bc.l1 * tr.a.inv_w + bc.l2 * tr.b.inv_w + bc.l3 * tr.c.inv_w;
+            Vec2 uv_over_w =
+                bc.l1 * tr.a.uv + bc.l2 * tr.b.uv + bc.l3 * tr.c.uv;
+
+            Vec2 uv = uv_over_w / q;
+
+            buffer.At(x, y) = SampleCheckerboard(uv);
           }
         }
       }
