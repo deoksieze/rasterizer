@@ -1,10 +1,12 @@
 
+#pragma once
 #include <array>
 #include <cmath>
 #include <numbers>
 #include <stdexcept>
+#include <vector>
 
-#include "Framebuffer.h"
+#include "Color.h"
 struct Vec4 {
   double x;
   double y;
@@ -67,32 +69,13 @@ Vec2 operator*(Vec2 v, double scalar) {
   return v;
 }
 
-Vec2 operator/(Vec2 v, double scalar) {
-  return v * (1 / scalar);
-}
+Vec2 operator/(Vec2 v, double scalar) { return v * (1 / scalar); }
 
 Vec2 operator*(double scalar, Vec2 v) { return v * scalar; }
 
 Vec2 Lerp(const Vec2& from, const Vec2& to, double t) {
   return from + t * (to - from);
 }
-
-struct MeshVertex {
-  Vec4 pos;
-  Color color;
-  Vec2 uv;
-};
-
-struct TriangleMesh {
-  int i0;
-  int i1;
-  int i2;
-};
-
-struct Mesh {
-  std::vector<MeshVertex> vertices;
-  std::vector<TriangleMesh> triangles;
-};
 
 template <int rows, int col>
 class Matrix {

@@ -12,7 +12,10 @@
 #include <vector>
 
 #include "Framebuffer.h"
-#include "math.h"
+#include "Math.h"
+#include "Mesh.h"
+#include "Texture.h"
+#include "TextureLoader.h"
 
 namespace fs = std::filesystem;
 struct BarycentricCoordinates {
@@ -497,6 +500,7 @@ int main() {
 
   const double cAspect = static_cast<double>(buffer.Width()) / buffer.Height();
   const Mesh& c_scene_mesh = cCube;
+  const Texture cTexture = LoadPpmP6("assets/Arthur_texture.ppm");
 
   Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
 
@@ -542,7 +546,8 @@ int main() {
 
             Vec2 uv = uv_over_w / q;
 
-            buffer.At(x, y) = SampleCheckerboard(uv);
+            const Color color = cTexture.SampleBilinear(uv);  // NOLINT
+            buffer.At(x, y) = color;
           }
         }
       }
