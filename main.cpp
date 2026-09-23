@@ -39,13 +39,13 @@ struct ScreenTriangle {
 };
 
 struct ClipVertex {
-  Vec4 pos;
+  Vec4 clip_pos;
   Color color;
   Vec2 uv;
 };
 
 ClipVertex Lerp(const ClipVertex& from, const ClipVertex& to, double t) {
-  return {.pos = Lerp(from.pos, to.pos, t),
+  return {.clip_pos = Lerp(from.clip_pos, to.clip_pos, t),
           .color = Lerp(from.color, to.color, t),
           .uv = Lerp(from.uv, to.uv, t)};
 }
@@ -60,8 +60,8 @@ struct ClipPlane {
   Vec4 coeff;
 
   double operator()(const ClipVertex& vertex) const {
-    return vertex.pos.x * coeff.x + vertex.pos.y * coeff.y +
-           vertex.pos.z * coeff.z + vertex.pos.w * coeff.w;
+    return vertex.clip_pos.x * coeff.x + vertex.clip_pos.y * coeff.y +
+           vertex.clip_pos.z * coeff.z + vertex.clip_pos.w * coeff.w;
   }
 };
 
@@ -124,17 +124,17 @@ const Mesh cCube{
             // Back / far layer: z = -3.45.
             // Все вершины гарантированно перед камерой,
             // которая смотрит вдоль -Z.
-            {{-0.65, -0.35, -2.45, 1.0}, {1.0, 0.0, 0.0}, {1.0, 1.0}},  // 0
-            {{+0.25, -0.35, -2.45, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 1
-            {{+0.25, +0.55, -2.45, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 2
-            {{-0.65, +0.55, -2.45, 1.0}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 3
+            {{-0.65, -0.35, -2.45}, {1.0, 0.0, 0.0}, {1.0, 1.0}},  // 0
+            {{+0.25, -0.35, -2.45}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 1
+            {{+0.25, +0.55, -2.45}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 2
+            {{-0.65, +0.55, -2.45}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 3
 
             // Front / near layer: z = -2.55.
             // Вершины расположены ближе к камере, чем back layer.
-            {{-0.25, -0.65, -1.55, 1.0}, {1.0, 0.0, 1.0}, {0.0, 0.0}},  // 4
-            {{+0.65, -0.65, -1.55, 1.0}, {0.0, 1.0, 1.0}, {1.0, 0.0}},  // 5
-            {{+0.65, +0.25, -1.55, 1.0}, {1.0, 1.0, 1.0}, {1.0, 1.0}},  // 6
-            {{-0.25, +0.25, -1.55, 1.0}, {0.3, 0.3, 0.3}, {0.0, 1.0}},  // 7
+            {{-0.25, -0.65, -1.55}, {1.0, 0.0, 1.0}, {0.0, 0.0}},  // 4
+            {{+0.65, -0.65, -1.55}, {0.0, 1.0, 1.0}, {1.0, 0.0}},  // 5
+            {{+0.65, +0.25, -1.55}, {1.0, 1.0, 1.0}, {1.0, 1.0}},  // 6
+            {{-0.25, +0.25, -1.55}, {0.3, 0.3, 0.3}, {0.0, 1.0}},  // 7
         },
 
     .triangles =
@@ -171,16 +171,16 @@ const Mesh cIntersectingTriangles{
             // Triangle 1: красный.
             // Его глубина меняется слева направо:
             // слева он ближе к камере, справа — дальше.
-            {{-1.20, -0.85, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
-            {{+1.20, -0.85, -5.00, 1.0}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
-            {{+0.00, +1.10, -3.50, 1.0}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
+            {{-1.20, -0.85, -2.00}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
+            {{+1.20, -0.85, -5.00}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
+            {{+0.00, +1.10, -3.50}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
 
             // Triangle 2: зелёный.
             // Его глубина меняется в противоположную сторону:
             // справа он ближе, слева — дальше.
-            {{-1.20, +0.70, -5.00, 1.0}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 3
-            {{+1.20, +0.70, -2.00, 1.0}, {0.0, 1.0, 0.0}, {1.0, 1.0}},  // 4
-            {{+0.00, -1.10, -3.50, 1.0}, {0.0, 1.0, 0.0}, {0.5, 0.0}},  // 5
+            {{-1.20, +0.70, -5.00}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 3
+            {{+1.20, +0.70, -2.00}, {0.0, 1.0, 0.0}, {1.0, 1.0}},  // 4
+            {{+0.00, -1.10, -3.50}, {0.0, 1.0, 0.0}, {0.5, 0.0}},  // 5
         },
 
     .triangles =
@@ -202,16 +202,16 @@ const Mesh cTiltedSquare{
             // (пол). Верхняя сторона расположена ближе к камере
             // (z = -1.5), нижняя — дальше (z = -3.0). Матрица UV покрывает
             // весь [0,1]^2, поэтому текстура растягивается на весь квадрат.
-            {{-0.70, +0.20, -1.50, 1.0},
+            {{-0.70, +0.20, -1.50},
              {1.0, 1.0, 1.0},
              {0.0, 1.0}},  // 0: ближний левый
-            {{+0.70, +0.20, -1.50, 1.0},
+            {{+0.70, +0.20, -1.50},
              {1.0, 1.0, 1.0},
              {1.0, 1.0}},  // 1: ближний правый
-            {{+0.70, -0.70, -3.00, 1.0},
+            {{+0.70, -0.70, -3.00},
              {1.0, 1.0, 1.0},
              {1.0, 0.0}},  // 2: дальний правый
-            {{-0.70, -0.70, -3.00, 1.0},
+            {{-0.70, -0.70, -3.00},
              {1.0, 1.0, 1.0},
              {0.0, 0.0}},  // 3: дальний левый
         },
@@ -231,9 +231,9 @@ const Mesh cNearPlaneClippingTests{
             // Ожидается: один исходный triangle проходит без изменения.
             // Красный triangle, расположен слева сверху.
             // ------------------------------------------------------------
-            {{-1.40, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
-            {{-0.45, +0.20, -2.00, 1.0}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
-            {{-0.90, +1.05, -2.00, 1.0}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
+            {{-1.40, +0.20, -2.00}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
+            {{-0.45, +0.20, -2.00}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
+            {{-0.90, +1.05, -2.00}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
 
             // ------------------------------------------------------------
             // Test 2: ровно 1 вершина inside, 2 outside.
@@ -242,15 +242,9 @@ const Mesh cNearPlaneClippingTests{
             // - двух пересечений с near plane.
             // Зелёный triangle, расположен справа сверху.
             // ------------------------------------------------------------
-            {{+0.90, +0.01, -2.00, 1.0},
-             {0.0, 1.0, 0.0},
-             {0.0, 0.0}},  // 3: inside
-            {{+0.35, +0.15, -0.05, 1.0},
-             {0.0, 1.0, 0.0},
-             {1.0, 0.0}},  // 4: outside
-            {{+1.45, +0.15, -0.05, 1.0},
-             {0.0, 1.0, 0.0},
-             {0.5, 1.0}},  // 5: outside
+            {{+0.90, +0.01, -2.00}, {0.0, 1.0, 0.0}, {0.0, 0.0}},  // 3: inside
+            {{+0.35, +0.15, -0.05}, {0.0, 1.0, 0.0}, {1.0, 0.0}},  // 4: outside
+            {{+1.45, +0.15, -0.05}, {0.0, 1.0, 0.0}, {0.5, 1.0}},  // 5: outside
 
             // ------------------------------------------------------------
             // Test 3: ровно 2 вершины inside, 1 outside.
@@ -258,22 +252,18 @@ const Mesh cNearPlaneClippingTests{
             // после triangulation: 2 triangles.
             // Синий triangle, расположен слева снизу.
             // ------------------------------------------------------------
-            {{-1.35, 2, -4.00, 1.0}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 6: inside
-            {{1.45, -1.50, -2.00, 1.0},
-             {0.0, 0.0, 1.0},
-             {1.0, 0.0}},  // 7: inside
-            {{-0.90, -0.20, -0.05, 1.0},
-             {0.0, 0.0, 1.0},
-             {0.5, 1.0}},  // 8: outside
+            {{-1.35, 2, -4.00}, {0.0, 0.0, 1.0}, {0.0, 0.0}},      // 6: inside
+            {{1.45, -1.50, -2.00}, {0.0, 0.0, 1.0}, {1.0, 0.0}},   // 7: inside
+            {{-0.90, -0.20, -0.05}, {0.0, 0.0, 1.0}, {0.5, 1.0}},  // 8: outside
 
             // ------------------------------------------------------------
             // Test 4: все 3 вершины outside.
             // Ожидается: 0 output triangles, ничего не рисуется.
             // Жёлтый triangle, расположен справа снизу.
             // ------------------------------------------------------------
-            {{+0.45, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}, {0.0, 0.0}},  // 9
-            {{+1.35, -1.05, -0.05, 1.0}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 10
-            {{+0.90, -0.20, -0.05, 1.0}, {1.0, 1.0, 0.0}, {0.5, 1.0}},  // 11
+            {{+0.45, -1.05, -0.05}, {1.0, 1.0, 0.0}, {0.0, 0.0}},  // 9
+            {{+1.35, -1.05, -0.05}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 10
+            {{+0.90, -0.20, -0.05}, {1.0, 1.0, 0.0}, {0.5, 1.0}},  // 11
         },
 
     .triangles =
@@ -309,24 +299,31 @@ BarycentricCoordinates GetBarycentricCoordinates(const ScreenTriangle& tr,
   };
 }
 
+ClipVertex TransformVertex(const MeshVertex& vertex, const Mat4& model,
+                           const Mat4& view, const Mat4& projection) {
+  ClipVertex result{};
+
+  const Vec4 cLocalPos{vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0};
+
+  result.clip_pos = projection * view * model * cLocalPos;
+  result.uv = vertex.uv;
+  result.color = vertex.color;
+
+  return result;
+}
+
 void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& P,  // NOLINT
                                   std::vector<ClipTriangle>& clip_triangles) {
   clip_triangles.clear();  // ХЗ оставить это так или нет
   ClipTriangle clip_triangle;
 
+  Mat4 M = Mat4::MakeUnitMatrix();  // NOLINT
+  Mat4 V = Mat4::MakeUnitMatrix();  // NOLINT
+
   for (const auto& tr : mesh.triangles) {
-    clip_triangle.a.pos = P * mesh.vertices[tr.i0].pos;
-    clip_triangle.a.color = mesh.vertices[tr.i0].color;
-    clip_triangle.a.uv = mesh.vertices[tr.i0].uv;
-
-    clip_triangle.b.pos = P * mesh.vertices[tr.i1].pos;
-    clip_triangle.b.color = mesh.vertices[tr.i1].color;
-    clip_triangle.b.uv = mesh.vertices[tr.i1].uv;
-
-    clip_triangle.c.pos = P * mesh.vertices[tr.i2].pos;
-    clip_triangle.c.color = mesh.vertices[tr.i2].color;
-    clip_triangle.c.uv = mesh.vertices[tr.i2].uv;
-
+    clip_triangle.a = TransformVertex(mesh.vertices[tr.i0], M, V, P);
+    clip_triangle.b = TransformVertex(mesh.vertices[tr.i1], M, V, P);
+    clip_triangle.c = TransformVertex(mesh.vertices[tr.i2], M, V, P);
     clip_triangles.push_back(clip_triangle);
   }
 }
@@ -408,13 +405,13 @@ void ClipTriangles(const std::vector<ClipTriangle>& clip_triangles,
 
 void ProjectVertexToScreen(ScreenVertex& ver_to_project, const ClipVertex& ver,
                            const Framebuffer& buff) {
-  const Vec4& v = ver.pos;
+  const Vec4& v = ver.clip_pos;
   Vec3 ndc_position{v.x / v.w, v.y / v.w, v.z / v.w};
   ver_to_project.pos = Vec2{(ndc_position.x + 1.0) / 2 * buff.Width(),
                             (1.0 - ndc_position.y) / 2 * buff.Height()};
   ver_to_project.depth = ndc_position.z;
   ver_to_project.color = ver.color;
-  ver_to_project.inv_w = 1 / ver.pos.w;
+  ver_to_project.inv_w = 1 / ver.clip_pos.w;
   ver_to_project.uv = ver.uv * ver_to_project.inv_w;
 }
 

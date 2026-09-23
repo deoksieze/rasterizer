@@ -7,6 +7,11 @@
 #include <vector>
 
 #include "Color.h"
+
+template <int rows, int col>
+class Matrix;
+using Mat4 = Matrix<4, 4>;
+
 struct Vec4 {
   double x;
   double y;
@@ -88,11 +93,18 @@ class Matrix {
     return data_[col * row + column];
   }
 
+  static Mat4 MakeUnitMatrix() {
+    Mat4 mat = Mat4();
+    for (int i = 0; i < 4; i++) {
+      mat.At(i, i) = 1;
+    }
+
+    return mat;
+  }
+
  private:
   std::array<double, rows * col> data_;
 };
-
-using Mat4 = Matrix<4, 4>;
 
 Vec4 operator*(const Mat4& mat, const Vec4& vec) {
   Vec4 ans;

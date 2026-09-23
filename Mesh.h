@@ -4,7 +4,7 @@
 #include "Color.h"
 
 struct MeshVertex {
-  Vec4 pos;
+  Vec3 pos;
   Color color;
   Vec2 uv;
 };
