@@ -308,7 +308,9 @@ std::uint8_t ToByte(double value) {
 }
 
 std::ostream& OpenNextPpm(std::ofstream& output) {
-  const fs::path cDirectory = "examples";
+  const fs::path cDirectory = "out";
+
+  fs::create_directories(cDirectory);
 
   std::size_t file_count = 0;
   for (const auto& entry : fs::directory_iterator(cDirectory)) {

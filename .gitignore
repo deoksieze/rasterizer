@@ -1,3 +1,18 @@
+# Build directories
+/build/
+/cmake-build-*/
+
+# Rendered output
+/out/
+
+# Binaries
+/main
+/Mesh
+*.o
+*.a
+*.so
+
+# Editor
 /.vscode
-.clang-format
-.clang-tidy
+/.idea
+compile_commands.json
