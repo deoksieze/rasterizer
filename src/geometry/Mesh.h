@@ -23,6 +23,7 @@ struct Triangle {
 struct Mesh {
   std::vector<MeshVertex> vertices;
   std::vector<Triangle> triangles;
+  bool has_texcoords = false;
 };
 
 }  // namespace raster
