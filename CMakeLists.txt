@@ -12,6 +12,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 add_library(rasterizer_lib STATIC
+  src/app/DemoScene.cpp
+  src/app/RenderScene.cpp
   src/core/Color.cpp
   src/core/Matrix.cpp
   src/core/Texture.cpp

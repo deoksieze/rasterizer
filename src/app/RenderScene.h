@@ -1,11 +1,10 @@
 #pragma once
 
-#include <string>
-
+#include "app/Scene.h"
 #include "raster/Framebuffer.h"
 
 namespace raster {
 
-void SavePpmP3(const std::string& path, const Framebuffer& buff);
+Framebuffer RenderScene(const Scene& scene);
 
 }  // namespace raster

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <fstream>
 #include <istream>
 #include <random>
 #include <sstream>
@@ -129,6 +130,16 @@ Mesh LoadObj(std::istream& input) {
   }
 
   return mesh;
+}
+
+Mesh LoadObj(const std::string& filename) {
+  std::ifstream input(filename);
+
+  if (!input) {
+    throw std::runtime_error("Failed to open OBJ file: " + filename);
+  }
+
+  return LoadObj(input);
 }
 
 }  // namespace raster
