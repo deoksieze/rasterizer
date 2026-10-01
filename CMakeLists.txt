@@ -14,8 +14,8 @@ endif()
 find_package(PNG REQUIRED)
 
 add_library(rasterizer_lib STATIC
-  src/app/DemoScene.cpp
   src/app/RenderScene.cpp
+  src/app/SceneLoader.cpp
   src/core/Color.cpp
   src/core/Matrix.cpp
   src/core/Texture.cpp
@@ -32,7 +32,10 @@ add_library(rasterizer_lib STATIC
   src/raster/Rasterizer.cpp
 )
 
-target_include_directories(rasterizer_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(rasterizer_lib PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+)
 
 target_compile_options(rasterizer_lib PRIVATE -Wall -Wextra -Wpedantic)
 

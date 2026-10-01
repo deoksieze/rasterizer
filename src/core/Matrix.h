@@ -39,6 +39,7 @@ Mat4 operator*(const Mat4& a, const Mat4& b);
 
 Mat4 MakePerspectiveMatrix(double vertical_fov_radians, double aspect_ratio,
                            double near_plane, double far_plane);
+Mat4 MakeLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec3& up);
 Mat4 MakeTranslateMatrix(double tx, double ty, double tz);
 Mat4 MakeScaleMatrix(double sx, double sy, double sz);
 Mat4 MakeRotateXMatrix(double angle_radians);

@@ -67,6 +67,31 @@ Mat4 MakePerspectiveMatrix(double vertical_fov_radians, double aspect_ratio,
   return projection;
 }
 
+Mat4 MakeLookAtMatrix(const Vec3& eye, const Vec3& center, const Vec3& up) {
+  const Vec3 cForward = Normalize(center - eye);
+  const Vec3 cRight = Normalize(Cross(cForward, up));
+  const Vec3 cUp = Cross(cRight, cForward);
+
+  Mat4 view = Mat4::MakeUnitMatrix();
+
+  view.At(0, 0) = cRight.x;
+  view.At(0, 1) = cRight.y;
+  view.At(0, 2) = cRight.z;
+  view.At(0, 3) = -Dot(cRight, eye);
+
+  view.At(1, 0) = cUp.x;
+  view.At(1, 1) = cUp.y;
+  view.At(1, 2) = cUp.z;
+  view.At(1, 3) = -Dot(cUp, eye);
+
+  view.At(2, 0) = -cForward.x;
+  view.At(2, 1) = -cForward.y;
+  view.At(2, 2) = -cForward.z;
+  view.At(2, 3) = Dot(cForward, eye);
+
+  return view;
+}
+
 Mat4 MakeTranslateMatrix(double tx, double ty, double tz) {
   Mat4 mat = Mat4::MakeUnitMatrix();
   mat.At(0, 3) = tx;

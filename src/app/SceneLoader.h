@@ -1,9 +1,11 @@
 #pragma once
 
+#include <string>
+
 #include "app/Scene.h"
 
 namespace raster {
 
-Scene MakeDemoScene();
+Scene LoadSceneFromJson(const std::string& path);
 
 }  // namespace raster

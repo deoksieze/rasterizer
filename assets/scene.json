@@ -1,0 +1,24 @@
+{
+  "width": 512,
+  "height": 512,
+  "background": [0.25098039215686274, 0.25098039215686274, 0.25098039215686274],
+  "output": "out/render.png",
+  "cull_back_faces": false,
+  "camera": {
+    "position": [0, 0, 0],
+    "look_at": [0, 0, -1],
+    "up": [0, 1, 0],
+    "fov_y_degrees": 60,
+    "near": 0.1,
+    "far": 100
+  },
+  "objects": [
+    {
+      "mesh": "assets/teapot.obj",
+      "texture": "assets/Ruslan_texture.ppm",
+      "translate": [0, 0, -10],
+      "rotate_degrees": [30, 36, 0],
+      "scale": [1, 1, 1]
+    }
+  ]
+}

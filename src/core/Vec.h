@@ -20,6 +20,14 @@ struct Vec3 {
   double z;
 };
 
+Vec3 operator-(const Vec3& a, const Vec3& b);
+Vec3 operator+(const Vec3& a, const Vec3& b);
+Vec3 operator*(const Vec3& v, double scalar);
+Vec3 operator*(double scalar, const Vec3& v);
+double Dot(const Vec3& a, const Vec3& b);
+Vec3 Cross(const Vec3& a, const Vec3& b);
+Vec3 Normalize(const Vec3& v);
+
 struct Vec4 {
   double x;
   double y;
