@@ -1,0 +1,18 @@
+{
+  "width": 128,
+  "height": 128,
+  "output": "out/golden_actual.ppm",
+  "camera": {
+    "position": [0, 0, 0],
+    "look_at": [0, 0, -1],
+    "up": [0, 1, 0]
+  },
+  "objects": [
+    {
+      "mesh": "assets/teapot.obj",
+      "texture": "assets/Ruslan_texture.ppm",
+      "translate": [0, 0, -10],
+      "rotate_degrees": [30, 36, 0]
+    }
+  ]
+}

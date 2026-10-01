@@ -46,3 +46,9 @@ add_executable(rasterizer src/main.cpp)
 target_link_libraries(rasterizer PRIVATE rasterizer_lib)
 
 target_compile_options(rasterizer PRIVATE -Wall -Wextra -Wpedantic)
+
+include(CTest)
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
