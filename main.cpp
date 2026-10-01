@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "Color.h"
 #include "Framebuffer.h"
 #include "Math.h"
 #include "Mesh.h"
@@ -54,6 +55,7 @@ struct ClipTriangle {
   ClipVertex a;
   ClipVertex b;
   ClipVertex c;
+  Color color;
 };
 
 struct ClipPlane {
@@ -118,163 +120,6 @@ const Color cColorB = {0.0, 1.0, 0.0};
 const Color cColorC = {0.0, 0.0, 1.0};
 const Color cBackGroundColor = {64.0 / 255.0, 64.0 / 255.0, 64.0 / 255.0};
 
-const Mesh cCube{
-    .vertices =
-        {
-            // Back / far layer: z = -3.45.
-            // Все вершины гарантированно перед камерой,
-            // которая смотрит вдоль -Z.
-            {{-0.65, -0.35, -2.45}, {1.0, 0.0, 0.0}, {1.0, 1.0}},  // 0
-            {{+0.25, -0.35, -2.45}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 1
-            {{+0.25, +0.55, -2.45}, {0.0, 0.0, 1.0}, {0.0, 0.0}},  // 2
-            {{-0.65, +0.55, -2.45}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 3
-
-            // Front / near layer: z = -2.55.
-            // Вершины расположены ближе к камере, чем back layer.
-            {{-0.25, -0.65, -1.55}, {1.0, 0.0, 1.0}, {0.0, 0.0}},  // 4
-            {{+0.65, -0.65, -1.55}, {0.0, 1.0, 1.0}, {1.0, 0.0}},  // 5
-            {{+0.65, +0.25, -1.55}, {1.0, 1.0, 1.0}, {1.0, 1.0}},  // 6
-            {{-0.25, +0.25, -1.55}, {0.3, 0.3, 0.3}, {0.0, 1.0}},  // 7
-        },
-
-    .triangles =
-        {
-
-            // 3. Ближняя грань: рисуется после дальних граней.
-            {4, 5, 6},
-            {4, 6, 7},
-            // 2. Стороны, соединяющие дальний и ближний слои.
-            // Пока z-buffer отсутствует, они должны быть до front face.
-            {0, 4, 7},
-            {0, 7, 3},
-
-            {1, 2, 6},
-            {1, 6, 5},
-
-            {0, 1, 5},
-            {0, 5, 4},
-
-            // 4. Верхняя грань остаётся последней,
-            // как в твоём текущем порядке.
-            {3, 7, 6},
-            {3, 6, 2},
-
-            // 1. Самая дальняя грань. Рисуем первой.
-            {0, 2, 1},
-            {0, 3, 2},
-        },
-};
-
-const Mesh cIntersectingTriangles{
-    .vertices =
-        {
-            // Triangle 1: красный.
-            // Его глубина меняется слева направо:
-            // слева он ближе к камере, справа — дальше.
-            {{-1.20, -0.85, -2.00}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
-            {{+1.20, -0.85, -5.00}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
-            {{+0.00, +1.10, -3.50}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
-
-            // Triangle 2: зелёный.
-            // Его глубина меняется в противоположную сторону:
-            // справа он ближе, слева — дальше.
-            {{-1.20, +0.70, -5.00}, {0.0, 1.0, 0.0}, {0.0, 1.0}},  // 3
-            {{+1.20, +0.70, -2.00}, {0.0, 1.0, 0.0}, {1.0, 1.0}},  // 4
-            {{+0.00, -1.10, -3.50}, {0.0, 1.0, 0.0}, {0.5, 0.0}},  // 5
-        },
-
-    .triangles =
-        {
-            // Красный triangle рисуется первым.
-            {0, 1, 2},
-
-            // Зелёный — вторым.
-            // Без z-buffer он полностью перекроет красный
-            // во всей общей области screen-space.
-            {3, 4, 5},
-        },
-};
-
-const Mesh cTiltedSquare{
-    .vertices =
-        {
-            // Квадрат (quad) из двух треугольников, лежит в плоскости XZ
-            // (пол). Верхняя сторона расположена ближе к камере
-            // (z = -1.5), нижняя — дальше (z = -3.0). Матрица UV покрывает
-            // весь [0,1]^2, поэтому текстура растягивается на весь квадрат.
-            {{-0.70, +0.20, -1.50},
-             {1.0, 1.0, 1.0},
-             {0.0, 1.0}},  // 0: ближний левый
-            {{+0.70, +0.20, -1.50},
-             {1.0, 1.0, 1.0},
-             {1.0, 1.0}},  // 1: ближний правый
-            {{+0.70, -0.70, -3.00},
-             {1.0, 1.0, 1.0},
-             {1.0, 0.0}},  // 2: дальний правый
-            {{-0.70, -0.70, -3.00},
-             {1.0, 1.0, 1.0},
-             {0.0, 0.0}},  // 3: дальний левый
-        },
-
-    .triangles =
-        {
-            {0, 1, 2},
-            {0, 2, 3},
-        },
-};
-
-const Mesh cNearPlaneClippingTests{
-    .vertices =
-        {
-            // ------------------------------------------------------------
-            // Test 1: все 3 вершины inside near plane.
-            // Ожидается: один исходный triangle проходит без изменения.
-            // Красный triangle, расположен слева сверху.
-            // ------------------------------------------------------------
-            {{-1.40, +0.20, -2.00}, {1.0, 0.0, 0.0}, {0.0, 0.0}},  // 0
-            {{-0.45, +0.20, -2.00}, {1.0, 0.0, 0.0}, {1.0, 0.0}},  // 1
-            {{-0.90, +1.05, -2.00}, {1.0, 0.0, 0.0}, {0.5, 1.0}},  // 2
-
-            // ------------------------------------------------------------
-            // Test 2: ровно 1 вершина inside, 2 outside.
-            // Ожидается: маленький clipped triangle из:
-            // - единственной исходной inside-вершины;
-            // - двух пересечений с near plane.
-            // Зелёный triangle, расположен справа сверху.
-            // ------------------------------------------------------------
-            {{+0.90, +0.01, -2.00}, {0.0, 1.0, 0.0}, {0.0, 0.0}},  // 3: inside
-            {{+0.35, +0.15, -0.05}, {0.0, 1.0, 0.0}, {1.0, 0.0}},  // 4: outside
-            {{+1.45, +0.15, -0.05}, {0.0, 1.0, 0.0}, {0.5, 1.0}},  // 5: outside
-
-            // ------------------------------------------------------------
-            // Test 3: ровно 2 вершины inside, 1 outside.
-            // Ожидается: clipped quadrilateral,
-            // после triangulation: 2 triangles.
-            // Синий triangle, расположен слева снизу.
-            // ------------------------------------------------------------
-            {{-1.35, 2, -4.00}, {0.0, 0.0, 1.0}, {0.0, 0.0}},      // 6: inside
-            {{1.45, -1.50, -2.00}, {0.0, 0.0, 1.0}, {1.0, 0.0}},   // 7: inside
-            {{-0.90, -0.20, -0.05}, {0.0, 0.0, 1.0}, {0.5, 1.0}},  // 8: outside
-
-            // ------------------------------------------------------------
-            // Test 4: все 3 вершины outside.
-            // Ожидается: 0 output triangles, ничего не рисуется.
-            // Жёлтый triangle, расположен справа снизу.
-            // ------------------------------------------------------------
-            {{+0.45, -1.05, -0.05}, {1.0, 1.0, 0.0}, {0.0, 0.0}},  // 9
-            {{+1.35, -1.05, -0.05}, {1.0, 1.0, 0.0}, {1.0, 0.0}},  // 10
-            {{+0.90, -0.20, -0.05}, {1.0, 1.0, 0.0}, {0.5, 1.0}},  // 11
-        },
-
-    .triangles =
-        {
-            {0, 1, 2},    // Test 1: 3 inside → 1 triangle
-            {3, 4, 5},    // Test 2: 1 inside → 1 clipped triangle
-            {6, 7, 8},    // Test 3: 2 inside → quad → 2 triangles
-            {9, 10, 11},  // Test 4: 0 inside → discard
-        },
-};
-
 // Методы для математики
 double Orientation(const Vec2& a, const Vec2& b, const Vec2& c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -312,18 +157,25 @@ ClipVertex TransformVertex(const MeshVertex& vertex, const Mat4& model,
   return result;
 }
 
-void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& P,  // NOLINT
+void TransformMeshToClipTriangles(const Mesh& mesh, const Mat4& model,
+                                  const Mat4& view, const Mat4& projection,
                                   std::vector<ClipTriangle>& clip_triangles) {
-  clip_triangles.clear();  // ХЗ оставить это так или нет
-  ClipTriangle clip_triangle;
+  clip_triangles.clear();
 
-  Mat4 M = Mat4::MakeUnitMatrix();  // NOLINT
-  Mat4 V = Mat4::MakeUnitMatrix();  // NOLINT
+  for (const auto& triangle : mesh.triangles) {
+    ClipTriangle clip_triangle;
 
-  for (const auto& tr : mesh.triangles) {
-    clip_triangle.a = TransformVertex(mesh.vertices[tr.i0], M, V, P);
-    clip_triangle.b = TransformVertex(mesh.vertices[tr.i1], M, V, P);
-    clip_triangle.c = TransformVertex(mesh.vertices[tr.i2], M, V, P);
+    clip_triangle.a =
+        TransformVertex(mesh.vertices[triangle.i0], model, view, projection);
+
+    clip_triangle.b =
+        TransformVertex(mesh.vertices[triangle.i1], model, view, projection);
+
+    clip_triangle.c =
+        TransformVertex(mesh.vertices[triangle.i2], model, view, projection);
+
+    clip_triangle.color = triangle.color;
+
     clip_triangles.push_back(clip_triangle);
   }
 }
@@ -390,7 +242,7 @@ void ClipTriangles(const std::vector<ClipTriangle>& clip_triangles,
 
     if (clip_polygon.size() == 3) {
       clipped_clip_triangles.push_back(
-          {clip_polygon[0], clip_polygon[1], clip_polygon[2]});
+          {clip_polygon[0], clip_polygon[1], clip_polygon[2], tr.color});
       continue;
     }
 
@@ -398,7 +250,7 @@ void ClipTriangles(const std::vector<ClipTriangle>& clip_triangles,
     // Разбиваем выпуклый polygon на triangle fan, сохраняя порядок вершин.
     for (std::size_t i = 1; i + 1 < clip_polygon.size(); ++i) {
       clipped_clip_triangles.push_back(
-          {clip_polygon[0], clip_polygon[i], clip_polygon[i + 1]});
+          {clip_polygon[0], clip_polygon[i], clip_polygon[i + 1], tr.color});
     }
   }
 }
@@ -424,7 +276,7 @@ void ProjectClippedTrianglesToScreen(
     ProjectVertexToScreen(triangle.a, tr.a, buff);
     ProjectVertexToScreen(triangle.b, tr.b, buff);
     ProjectVertexToScreen(triangle.c, tr.c, buff);
-    triangle.color = tr.a.color;  // Временно работаю так с цветом
+    triangle.color = tr.color;  // Временно работаю так с цветом
 
     triangles.push_back(triangle);
   }
@@ -496,15 +348,29 @@ int main() {
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
 
   const double cAspect = static_cast<double>(buffer.Width()) / buffer.Height();
-  const Mesh& c_scene_mesh = cCube;
-  const Texture cTexture = LoadPpmP6("assets/Arthur_texture.ppm");
 
-  Mat4 mat = MakePerspectiveMatrix(cFovY, cAspect, cNearPlane, cFarPlane);
+  std::ifstream mesh_file("assets/teapot.obj");
+
+  if (!mesh_file.is_open()) {
+    std::cerr << "cannot open .obj file\n";
+    return 1;
+  }
+  const Mesh& c_mesh = LoadObj(mesh_file);
+  const Texture cTexture = LoadPpmP6("assets/Ruslan_texture.ppm");
+
+  const Mat4 cModel = MakeTranslateMatrix(0, 0.0, -10.0) *
+                      MakeRotateYMatrix(std::numbers::pi / 5) *
+                      MakeRotateXMatrix(std::numbers::pi / 6);
+  const Mat4 cView = Mat4::MakeUnitMatrix();
+
+  const Mat4 cProjection = MakePerspectiveMatrix(
+      60.0 * std::numbers::pi / 180.0, cAspect, 0.1, 100.0);
 
   std::vector<ClipTriangle> clip_triangles{};
   std::vector<ClipTriangle> clipped_triangles{};
   std::vector<ScreenTriangle> triangles;
-  TransformMeshToClipTriangles(c_scene_mesh, mat, clip_triangles);
+  TransformMeshToClipTriangles(c_mesh, cModel, cView, cProjection,
+                               clip_triangles);
   ClipTriangles(clip_triangles, clipped_triangles);
   ProjectClippedTrianglesToScreen(clipped_triangles, triangles, buffer);
 
@@ -532,18 +398,17 @@ int main() {
               bc.l1 * tr.a.depth + bc.l2 * tr.b.depth + bc.l3 * tr.c.depth;
 
           if (buffer.PassDepthTest(depth, x, y)) {
-            // buffer.At(x, y) = cColorA * bc.l1 + cColorB * bc.l2 + cColorC *
-            // bc.l3;
             buffer.DepthAt(x, y) = depth;
 
-            double q =
-                bc.l1 * tr.a.inv_w + bc.l2 * tr.b.inv_w + bc.l3 * tr.c.inv_w;
-            Vec2 uv_over_w =
-                bc.l1 * tr.a.uv + bc.l2 * tr.b.uv + bc.l3 * tr.c.uv;
+            // double q =
+            //     bc.l1 * tr.a.inv_w + bc.l2 * tr.b.inv_w + bc.l3 * tr.c.inv_w;
+            // Vec2 uv_over_w =
+            //     bc.l1 * tr.a.uv + bc.l2 * tr.b.uv + bc.l3 * tr.c.uv;
 
-            Vec2 uv = uv_over_w / q;
+            // Vec2 uv = uv_over_w / q;
 
-            const Color color = cTexture.SampleBilinear(uv);  // NOLINT
+            // const Color color = cTexture.SampleNearest(uv);  // NOLINT
+            const Color color = tr.color;  // NOLINT
             buffer.At(x, y) = color;
           }
         }

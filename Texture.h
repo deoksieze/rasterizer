@@ -47,15 +47,22 @@ class Texture {
     double u = std::clamp(uv.x, 0.0, 1.0);
     double v = std::clamp(uv.y, 0.0, 1.0);
 
-    int x0 = static_cast<int>(std::floor(u * static_cast<double>(Width() - 1)));
-    int y0 = static_cast<int>(std::floor(v * static_cast<double>(Width() - 1)));
+    const double cX = u * static_cast<double>(Width() - 1);
+    const double cY = v * static_cast<double>(Height() - 1);
 
-    int x1 = x0 + 1;
-    int y1 = y0 + 1;
+    const int cX0 = static_cast<int>(std::floor(cX));
+    const int cY0 = static_cast<int>(std::floor(cY));
 
-    return (TexelAt(x0, y0) + TexelAt(x0, y1) + TexelAt(x1, y0) +
-            TexelAt(x1, y1)) /
-           4.0;  // NOLINT
+    const int cX1 = std::min(cX0 + 1, Width() - 1);
+    const int cY1 = std::min(cY0 + 1, Height() - 1);
+
+    const double cWebX = cX - cX0;
+    const double cWebY = cY - cY0;
+
+    const Color cBottom = Lerp(TexelAt(cX0, cY0), TexelAt(cX1, cY0), cWebX);
+    const Color cTop = Lerp(TexelAt(cX0, cY1), TexelAt(cX1, cY1), cWebX);
+
+    return Lerp(cBottom, cTop, cWebY);
   }
 
  private:

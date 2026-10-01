@@ -82,15 +82,15 @@ Vec2 Lerp(const Vec2& from, const Vec2& to, double t) {
   return from + t * (to - from);
 }
 
-template <int rows, int col>
+template <int Rows, int Colls>  // NOLINT
 class Matrix {
  public:
   Matrix() : data_{} {}
 
-  double& At(int row, int column) { return data_[col * row + column]; }
+  double& At(int row, int column) { return data_[Colls * row + column]; }
 
   const double& At(int row, int column) const {
-    return data_[col * row + column];
+    return data_[Colls * row + column];
   }
 
   static Mat4 MakeUnitMatrix() {
@@ -103,7 +103,7 @@ class Matrix {
   }
 
  private:
-  std::array<double, rows * col> data_;
+  std::array<double, Rows * Colls> data_;
 };
 
 Vec4 operator*(const Mat4& mat, const Vec4& vec) {
@@ -171,4 +171,56 @@ Mat4 MakePerspectiveMatrix(double vertical_fov_radians, double aspect_ratio,
   projection.At(3, 2) = -1.0;
 
   return projection;
+}
+
+Mat4 MakeTranslateMatrix(double tx, double ty, double tz) {
+  Mat4 mat = Mat4::MakeUnitMatrix();
+  mat.At(0, 3) = tx;
+  mat.At(1, 3) = ty;
+  mat.At(2, 3) = tz;
+  return mat;
+}
+
+Mat4 MakeScaleMatrix(double sx, double sy, double sz) {
+  Mat4 mat = Mat4::MakeUnitMatrix();
+  mat.At(0, 0) = sx;
+  mat.At(1, 1) = sy;
+  mat.At(2, 2) = sz;
+  return mat;
+}
+
+Mat4 MakeRotateXMatrix(double angle_radians) {
+  const double c = std::cos(angle_radians);  // NOLINT
+  const double s = std::sin(angle_radians);  // NOLINT
+
+  Mat4 mat = Mat4::MakeUnitMatrix();
+  mat.At(1, 1) = c;
+  mat.At(1, 2) = -s;
+  mat.At(2, 1) = s;
+  mat.At(2, 2) = c;
+  return mat;
+}
+
+Mat4 MakeRotateYMatrix(double angle_radians) {
+  const double c = std::cos(angle_radians);  // NOLINT
+  const double s = std::sin(angle_radians);  // NOLINT
+
+  Mat4 mat = Mat4::MakeUnitMatrix();
+  mat.At(0, 0) = c;
+  mat.At(0, 2) = s;
+  mat.At(2, 0) = -s;
+  mat.At(2, 2) = c;
+  return mat;
+}
+
+Mat4 MakeRotateZMatrix(double angle_radians) {
+  const double c = std::cos(angle_radians);  // NOLINT
+  const double s = std::sin(angle_radians);  // NOLINT
+
+  Mat4 mat = Mat4::MakeUnitMatrix();
+  mat.At(0, 0) = c;
+  mat.At(0, 1) = -s;
+  mat.At(1, 0) = s;
+  mat.At(1, 1) = c;
+  return mat;
 }
