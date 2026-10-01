@@ -1,10 +1,13 @@
+#include "io/PpmLoader.h"
+
+#include <cctype>
 #include <fstream>
+#include <istream>
 #include <limits>
 #include <stdexcept>
 #include <string>
 
-#include "Texture.h"
-
+namespace raster {
 namespace {
 
 std::string ReadPpmHeaderToken(std::istream& input) {
@@ -127,3 +130,5 @@ Texture LoadPpmP6(const std::string& filename) {
 
   return texture;
 }
+
+}  // namespace raster

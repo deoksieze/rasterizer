@@ -1,127 +1,21 @@
+#include "Matrix.h"
 
-#pragma once
 #include <array>
 #include <cmath>
 #include <numbers>
 #include <stdexcept>
-#include <vector>
 
-#include "Color.h"
-
-template <int rows, int col>
-class Matrix;
-using Mat4 = Matrix<4, 4>;
-
-struct Vec4 {
-  double x;
-  double y;
-  double z;
-  double w;
-};
-
-Vec4 operator+(Vec4 a, const Vec4& b) {
-  a.x += b.x;
-  a.y += b.y;
-  a.z += b.z;
-  a.w += b.w;
-  return a;
-}
-
-Vec4 operator-(Vec4 a, const Vec4& b) {
-  a.x -= b.x;
-  a.y -= b.y;
-  a.z -= b.z;
-  a.w -= b.w;
-  return a;
-}
-
-Vec4 operator*(Vec4 v, double scalar) {
-  v.x *= scalar;
-  v.y *= scalar;
-  v.z *= scalar;
-  v.w *= scalar;
-  return v;
-}
-
-Vec4 operator*(double scalar, Vec4 v) { return v * scalar; }
-
-Vec4 Lerp(const Vec4& from, const Vec4& to, double t) {
-  return from + t * (to - from);
-}
-
-struct Vec3 {
-  double x;
-  double y;
-  double z;
-};
-
-struct Vec2 {
-  double x;
-  double y;
-};
-
-Vec2 operator-(Vec2 a, Vec2 b) { return Vec2{a.x - b.x, a.y - b.y}; }
-
-Vec2 operator+(Vec2 a, const Vec2& b) {
-  a.x += b.x;
-  a.y += b.y;
-  return a;
-}
-
-Vec2 operator*(Vec2 v, double scalar) {
-  v.x *= scalar;
-  v.y *= scalar;
-  return v;
-}
-
-Vec2 operator/(Vec2 v, double scalar) { return v * (1 / scalar); }
-
-Vec2 operator*(double scalar, Vec2 v) { return v * scalar; }
-
-Vec2 Lerp(const Vec2& from, const Vec2& to, double t) {
-  return from + t * (to - from);
-}
-
-template <int Rows, int Colls>  // NOLINT
-class Matrix {
- public:
-  Matrix() : data_{} {}
-
-  double& At(int row, int column) { return data_[Colls * row + column]; }
-
-  const double& At(int row, int column) const {
-    return data_[Colls * row + column];
-  }
-
-  static Mat4 MakeUnitMatrix() {
-    Mat4 mat = Mat4();
-    for (int i = 0; i < 4; i++) {
-      mat.At(i, i) = 1;
-    }
-
-    return mat;
-  }
-
- private:
-  std::array<double, Rows * Colls> data_;
-};
+namespace raster {
 
 Vec4 operator*(const Mat4& mat, const Vec4& vec) {
-  Vec4 ans;
-
-  std::array<double, 4> temp;
+  std::array<double, 4> temp{};
 
   for (int row = 0; row < 4; row++) {
     temp[row] = mat.At(row, 0) * vec.x + mat.At(row, 1) * vec.y +
                 mat.At(row, 2) * vec.z + mat.At(row, 3) * vec.w;
   }
 
-  ans.x = temp[0];
-  ans.y = temp[1];
-  ans.z = temp[2];
-  ans.w = temp[3];
-
-  return ans;
+  return Vec4{temp[0], temp[1], temp[2], temp[3]};
 }
 
 Mat4 operator*(const Mat4& a, const Mat4& b) {
@@ -224,3 +118,5 @@ Mat4 MakeRotateZMatrix(double angle_radians) {
   mat.At(1, 1) = c;
   return mat;
 }
+
+}  // namespace raster

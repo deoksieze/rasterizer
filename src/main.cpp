@@ -11,14 +11,19 @@
 #include <string>
 #include <vector>
 
-#include "Color.h"
-#include "Framebuffer.h"
-#include "Math.h"
-#include "Mesh.h"
-#include "Texture.h"
-#include "TextureLoader.h"
+#include "core/Color.h"
+#include "core/Matrix.h"
+#include "core/Texture.h"
+#include "core/Vec.h"
+#include "geometry/Mesh.h"
+#include "io/ObjLoader.h"
+#include "io/PpmLoader.h"
+#include "raster/Framebuffer.h"
 
 namespace fs = std::filesystem;
+
+namespace raster {
+
 struct BarycentricCoordinates {
   double l1;
   double l2;
@@ -99,12 +104,9 @@ BoundingBox FindBoundingBox(const ScreenTriangle& tr,
 const int cImageWidth = 512;
 const int cImageHeight = 512;
 const bool cCullBackFaces = false;
-const double cFovY = 90.0 * std::numbers::pi / 180.0;
 
 const double cPixCentOffset = 0.5;
 const double cMaxColor = 255.0;
-const double cNearPlane = 0.1;
-const double cFarPlane = 100.0;
 
 const std::array<ClipPlane, 6> cClipPlanes = {{
     {{1.0, 0.0, 0.0, 1.0}},   // left   (x + w >= 0)
@@ -115,9 +117,6 @@ const std::array<ClipPlane, 6> cClipPlanes = {{
     {{0.0, 0.0, -1.0, 1.0}},  // far    (w - z >= 0)
 }};
 
-const Color cColorA = {1.0, 0.0, 0.0};
-const Color cColorB = {0.0, 1.0, 0.0};
-const Color cColorC = {0.0, 0.0, 1.0};
 const Color cBackGroundColor = {64.0 / 255.0, 64.0 / 255.0, 64.0 / 255.0};
 
 // Методы для математики
@@ -346,7 +345,11 @@ void SaveImage(std::ostream& stream, const Framebuffer& buff) {
   }
 }
 
+}  // namespace raster
+
 int main() {
+  using namespace raster;  // NOLINT
+
   Framebuffer buffer = Framebuffer(cImageWidth, cImageHeight, cBackGroundColor);
 
   const double cAspect = static_cast<double>(buffer.Width()) / buffer.Height();

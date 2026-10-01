@@ -1,33 +1,16 @@
-#pragma once
+#include "io/ObjLoader.h"
 
+#include <array>
 #include <cstddef>
-#include <iostream>
 #include <istream>
 #include <random>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
-#include "Color.h"
-#include "Math.h"
-
-struct MeshVertex {
-  Vec3 pos;
-  Color color;
-  Vec2 uv;
-};
-
-struct TriangleMesh {
-  int i0;
-  int i1;
-  int i2;
-  Color color;
-};
-
-struct Mesh {
-  std::vector<MeshVertex> vertices;
-  std::vector<TriangleMesh> triangles;
-};
+namespace raster {
+namespace {
 
 Color DebugTriangleColor(std::size_t triangle_index) {
   static constexpr std::array<Color, 10> cPalette = {
@@ -46,8 +29,8 @@ Color DebugTriangleColor(std::size_t triangle_index) {
   return cPalette[triangle_index % cPalette.size()];
 }
 
-inline int ParseObjPositionIndex(std::string_view face_token,
-                                 std::size_t position_count) {
+int ParseObjPositionIndex(std::string_view face_token,
+                          std::size_t position_count) {
   const std::size_t cSlash = face_token.find('/');
 
   const std::string_view cPositionText = face_token.substr(0, cSlash);
@@ -76,7 +59,9 @@ inline int ParseObjPositionIndex(std::string_view face_token,
   return cIndex;
 }
 
-inline Mesh LoadObj(std::istream& input) {
+}  // namespace
+
+Mesh LoadObj(std::istream& input) {
   Mesh mesh;
 
   std::string line;
@@ -132,11 +117,11 @@ inline Mesh LoadObj(std::istream& input) {
 
       const std::size_t cTriangleIndex = mesh.triangles.size();
 
-      mesh.triangles.push_back(TriangleMesh{
-          .i0 = ParseObjPositionIndex(token0, mesh.vertices.size()),
-          .i1 = ParseObjPositionIndex(token1, mesh.vertices.size()),
-          .i2 = ParseObjPositionIndex(token2, mesh.vertices.size()),
-          .color = DebugTriangleColor(cTriangleIndex)});
+      mesh.triangles.push_back(
+          Triangle{.i0 = ParseObjPositionIndex(token0, mesh.vertices.size()),
+                   .i1 = ParseObjPositionIndex(token1, mesh.vertices.size()),
+                   .i2 = ParseObjPositionIndex(token2, mesh.vertices.size()),
+                   .color = DebugTriangleColor(cTriangleIndex)});
     }
 
     // Пока пропускаем:
@@ -145,3 +130,5 @@ inline Mesh LoadObj(std::istream& input) {
 
   return mesh;
 }
+
+}  // namespace raster
