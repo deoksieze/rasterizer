@@ -16,3 +16,6 @@
 /.vscode
 /.idea
 compile_commands.json
+
+# clangd index cache
+/.cache/

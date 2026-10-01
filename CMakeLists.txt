@@ -18,7 +18,11 @@ add_library(rasterizer_lib STATIC
   src/core/Vec.cpp
   src/io/ObjLoader.cpp
   src/io/PpmLoader.cpp
+  src/io/PpmWriter.cpp
+  src/raster/Clipper.cpp
   src/raster/Framebuffer.cpp
+  src/raster/Projector.cpp
+  src/raster/Rasterizer.cpp
 )
 
 target_include_directories(rasterizer_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
