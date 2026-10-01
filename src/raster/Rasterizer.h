@@ -8,6 +8,8 @@
 
 namespace raster {
 
+class Texture;
+
 struct BarycentricCoordinates {
   double l1;
   double l2;
@@ -32,10 +34,11 @@ BarycentricCoordinates GetBarycentricCoordinates(const ScreenTriangle& tr,
 BoundingBox FindBoundingBox(const ScreenTriangle& tr,
                             const Framebuffer& buffer);
 
-void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr);
+void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr,
+                       const Texture* texture = nullptr);
 
 void RasterizeTriangles(Framebuffer& buffer,
                         const std::vector<ScreenTriangle>& triangles,
-                        bool cull_back_faces);
+                        bool cull_back_faces, const Texture* texture = nullptr);
 
 }  // namespace raster

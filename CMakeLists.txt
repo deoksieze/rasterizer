@@ -20,6 +20,7 @@ add_library(rasterizer_lib STATIC
   src/core/Matrix.cpp
   src/core/Texture.cpp
   src/core/Vec.cpp
+  src/geometry/UvProjection.cpp
   src/io/ImageWriter.cpp
   src/io/ObjLoader.cpp
   src/io/PngWriter.cpp

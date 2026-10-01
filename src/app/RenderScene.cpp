@@ -1,11 +1,15 @@
 #include "app/RenderScene.h"
 
 #include <numbers>
+#include <optional>
 #include <vector>
 
 #include "core/Matrix.h"
+#include "core/Texture.h"
 #include "geometry/Mesh.h"
+#include "geometry/UvProjection.h"
 #include "io/ObjLoader.h"
+#include "io/PpmLoader.h"
 #include "raster/Clipper.h"
 #include "raster/Projector.h"
 #include "raster/Rasterizer.h"
@@ -27,9 +31,18 @@ Framebuffer RenderScene(const Scene& scene) {
   std::vector<ScreenTriangle> screen_triangles;
 
   for (const Drawable& object : scene.objects) {
-    const Mesh cMesh = LoadObj(object.mesh_path);
+    Mesh mesh = LoadObj(object.mesh_path);
 
-    TransformMeshToClipTriangles(cMesh, object.model, scene.camera.view,
+    if (!mesh.has_texcoords) {
+      ProjectSphericalUvs(mesh);
+    }
+
+    std::optional<Texture> texture;
+    if (!object.texture_path.empty()) {
+      texture = LoadPpmP6(object.texture_path);
+    }
+
+    TransformMeshToClipTriangles(mesh, object.model, scene.camera.view,
                                  cProjection, clip_triangles);
     ClipTriangles(clip_triangles, clipped_triangles);
 
@@ -37,7 +50,8 @@ Framebuffer RenderScene(const Scene& scene) {
     ProjectClippedTrianglesToScreen(clipped_triangles, screen_triangles,
                                     buffer);
 
-    RasterizeTriangles(buffer, screen_triangles, scene.cull_back_faces);
+    RasterizeTriangles(buffer, screen_triangles, scene.cull_back_faces,
+                       texture ? &*texture : nullptr);
   }
 
   return buffer;

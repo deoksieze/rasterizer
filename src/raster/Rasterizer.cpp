@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "core/Texture.h"
+
 namespace raster {
 namespace {
 
@@ -54,7 +56,8 @@ BoundingBox FindBoundingBox(const ScreenTriangle& tr,
   return BoundingBox{cMinX, cMaxX, cMinY, cMaxY};
 }
 
-void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr) {
+void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr,
+                       const Texture* texture) {
   const BoundingBox cBox = FindBoundingBox(tr, buffer);
 
   if (cBox.max_x <= cBox.min_x || cBox.max_y <= cBox.min_y) {
@@ -75,15 +78,17 @@ void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr) {
         if (buffer.PassDepthTest(cDepth, x, y)) {
           buffer.DepthAt(x, y) = cDepth;
 
-          // double q = cBc.l1 * tr.a.inv_w + cBc.l2 * tr.b.inv_w +
-          //            cBc.l3 * tr.c.inv_w;
-          // Vec2 uv_over_w = cBc.l1 * tr.a.uv + cBc.l2 * tr.b.uv +
-          //                  cBc.l3 * tr.c.uv;
-          //
-          // Vec2 uv = uv_over_w / q;
-          //
-          // const Color color = texture.SampleNearest(uv);
-          const Color color = tr.color;  // NOLINT
+          Color color = tr.color;  // NOLINT
+          if (texture != nullptr) {
+            const double cQ =
+                cBc.l1 * tr.a.inv_w + cBc.l2 * tr.b.inv_w + cBc.l3 * tr.c.inv_w;
+
+            const Vec2 cUvOverW =
+                cBc.l1 * tr.a.uv + cBc.l2 * tr.b.uv + cBc.l3 * tr.c.uv;
+
+            color = texture->SampleBilinear(cUvOverW / cQ);
+          }
+
           buffer.At(x, y) = color;
         }
       }
@@ -93,13 +98,13 @@ void RasterizeTriangle(Framebuffer& buffer, const ScreenTriangle& tr) {
 
 void RasterizeTriangles(Framebuffer& buffer,
                         const std::vector<ScreenTriangle>& triangles,
-                        bool cull_back_faces) {
+                        bool cull_back_faces, const Texture* texture) {
   for (const auto& tr : triangles) {
     if (cull_back_faces && !IsFrontFacing(tr)) {
       continue;
     }
 
-    RasterizeTriangle(buffer, tr);
+    RasterizeTriangle(buffer, tr, texture);
   }
 }
 

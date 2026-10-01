@@ -20,6 +20,7 @@ Scene MakeDemoScene() {
 
   Drawable teapot;
   teapot.mesh_path = "assets/teapot.obj";
+  teapot.texture_path = "assets/Ruslan_texture.ppm";
   teapot.model = MakeTranslateMatrix(0, 0, cTeapotDistance) *
                  MakeRotateYMatrix(cTeapotRotationY) *
                  MakeRotateXMatrix(cTeapotRotationX);

@@ -17,6 +17,7 @@ struct Camera {
 
 struct Drawable {
   std::string mesh_path;
+  std::string texture_path;
   Mat4 model = Mat4::MakeUnitMatrix();
 };
 
