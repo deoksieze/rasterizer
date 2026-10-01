@@ -4,7 +4,7 @@
 #include "app/DemoScene.h"
 #include "app/RenderScene.h"
 #include "app/Scene.h"
-#include "io/PpmWriter.h"
+#include "io/ImageWriter.h"
 
 int main() {
   using namespace raster;  // NOLINT
@@ -14,7 +14,7 @@ int main() {
 
     const Framebuffer cBuffer = RenderScene(cScene);
 
-    SavePpmP3(cScene.output_path, cBuffer);
+    SaveImage(cScene.output_path, cBuffer);
   } catch (const std::exception& error) {
     std::cerr << "render failed: " << error.what() << '\n';
     return 1;

@@ -11,6 +11,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
 endif()
 
+find_package(PNG REQUIRED)
+
 add_library(rasterizer_lib STATIC
   src/app/DemoScene.cpp
   src/app/RenderScene.cpp
@@ -18,7 +20,9 @@ add_library(rasterizer_lib STATIC
   src/core/Matrix.cpp
   src/core/Texture.cpp
   src/core/Vec.cpp
+  src/io/ImageWriter.cpp
   src/io/ObjLoader.cpp
+  src/io/PngWriter.cpp
   src/io/PpmLoader.cpp
   src/io/PpmWriter.cpp
   src/raster/Clipper.cpp
@@ -30,6 +34,8 @@ add_library(rasterizer_lib STATIC
 target_include_directories(rasterizer_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_compile_options(rasterizer_lib PRIVATE -Wall -Wextra -Wpedantic)
+
+target_link_libraries(rasterizer_lib PRIVATE PNG::PNG)
 
 add_executable(rasterizer src/main.cpp)
 

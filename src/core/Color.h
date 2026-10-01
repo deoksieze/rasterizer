@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace raster {
 
 struct Color {
@@ -20,6 +22,8 @@ Color operator+(Color c1, Color c2);
 Color operator-(const Color& lhs, const Color& rhs);
 Color operator/(const Color& color, double x);
 Color Lerp(const Color& from, const Color& to, double t);
+
+std::uint8_t ToByte(double value);
 
 // NOLINTBEGIN(readability-identifier-naming)
 

@@ -1,6 +1,14 @@
 #include "Color.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace raster {
+namespace {
+
+const double cMaxColor = 255.0;
+
+}  // namespace
 
 Color& Color::operator+=(const Color& other) {
   r += other.r;
@@ -38,6 +46,11 @@ Color operator/(const Color& color, double x) {
 
 Color Lerp(const Color& from, const Color& to, double t) {
   return from + t * (to - from);
+}
+
+std::uint8_t ToByte(double value) {
+  value = std::clamp(value, 0.0, 1.0);
+  return static_cast<std::uint8_t>(std::lround(value * cMaxColor));
 }
 
 }  // namespace raster

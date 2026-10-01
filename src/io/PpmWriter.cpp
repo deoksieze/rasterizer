@@ -1,21 +1,14 @@
 #include "io/PpmWriter.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ostream>
 #include <stdexcept>
 
 namespace raster {
 namespace {
-
-const double cMaxColor = 255.0;
-
-std::uint8_t ToByte(double value) {
-  value = std::clamp(value, 0.0, 1.0);
-  return static_cast<std::uint8_t>(std::lround(value * cMaxColor));
-}
 
 void WritePpmP3(std::ostream& stream, const Framebuffer& buff) {
   stream << "P3\n";

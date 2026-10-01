@@ -27,7 +27,7 @@ struct Scene {
   Camera camera;
   bool cull_back_faces = false;
   std::vector<Drawable> objects;
-  std::string output_path = "out/render.ppm";
+  std::string output_path = "out/render.png";
 };
 
 }  // namespace raster
