@@ -1,13 +1,29 @@
 {
   "width": 512,
   "height": 512,
-  "background": [0.25098039215686274, 0.25098039215686274, 0.25098039215686274],
+  "background": [
+    0.25098039215686274,
+    0.25098039215686274,
+    0.25098039215686274
+  ],
   "output": "out/render.png",
   "cull_back_faces": false,
   "camera": {
-    "position": [0, 0, 0],
-    "look_at": [0, 0, -1],
-    "up": [0, 1, 0],
+    "position": [
+      0,
+      0,
+      0
+    ],
+    "look_at": [
+      0,
+      0,
+      -1
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
     "fov_y_degrees": 60,
     "near": 0.1,
     "far": 100
@@ -15,10 +31,79 @@
   "objects": [
     {
       "mesh": "assets/cube.obj",
+      "texture": "assets/Ruslan_texture.ppm",
+      "translate": [
+        0,
+        0,
+        -10
+      ],
+      "rotate_degrees": [
+        15,
+        24,
+        69
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "mesh": "assets/cylinder.obj",
+      "texture": "assets/Arthur_texture.ppm",
+      "translate": [
+        3,
+        -2,
+        -10
+      ],
+      "rotate_degrees": [
+        67,
+        30,
+        180
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "mesh": "assets/torus.obj",
       "texture": "assets/road.png",
-      "translate": [0, 0, -10],
-      "rotate_degrees": [0, 0, 180],
-      "scale": [10, 10, 10]
+      "translate": [
+        3,
+        -1,
+        -10
+      ],
+      "rotate_degrees": [
+        56,
+        69,
+        180
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "mesh": "assets/pyramid.obj",
+      "texture": "assets/modus_ponens.png",
+      "translate": [
+        -3,
+        0,
+        -10
+      ],
+      "rotate_degrees": [
+        90,
+        -80,
+        -180
+      ],
+      "scale": [
+        1,
+        4,
+        1
+      ]
     }
   ]
 }

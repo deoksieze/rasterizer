@@ -177,6 +177,53 @@ Rules:
 To place a texture precisely, author `vt` coordinates in the OBJ; otherwise the automatic
 spherical mapping is used.
 
+## Random scene generator
+
+`tools/generate_scene.py` writes a scene full of random meshes, random textures and random
+transforms, which is a quick way to see what the rasterizer currently handles. It needs
+nothing but Python 3 and never touches the repository: scenes go to `out/`.
+
+```sh
+tools/generate_scene.py --count 24 --seed 1 --render
+```
+
+`--render` runs the rasterizer on the generated scene straight away. Everything is
+reproducible from `--seed`; omit it for a fresh one. `--count`, `--layout`, `--width`,
+`--height`, `--distance`, `--cull` and the `--mesh`/`--texture` filters are the knobs you
+will reach for first, and `--help` lists the rest.
+
+Layouts:
+
+| `--layout` | What it stresses                                                        |
+|------------|-------------------------------------------------------------------------|
+| `grid`     | Jittered lattice, everything visible. Good default for eyeballing UVs.  |
+| `scatter`  | Uniform random in a box, so the frame fills up and objects overlap.      |
+| `spiral`   | Objects spiral away from the camera: perspective-correct UVs over depth. |
+| `stack`    | All objects piled onto one spot: interpenetration and depth fights.       |
+| `shell`    | Objects surround the camera, so most faces point away from it.            |
+
+Transforms are random rotations on all three axes plus a random, optionally non-uniform
+scale (`--stretch`). `--flip-ratio` gives an axis a negative scale, which mirrors the mesh
+and flips its winding — the cheapest way to see whether `--cull` behaves. `--clip-ratio`
+places a share of the objects across the near plane so the clipper gets real geometry.
+
+Meshes are re-centred analytically rather than trusting their authored origin, so the
+layout means what it says regardless of where a mesh sits in its `.obj`
+(`4.obj` has its bounding box centre 5.2 units off the origin, `triangle.obj` spans 8.2).
+
+`--procedural N` additionally generates N random textures and adds them to the pool —
+checker, stripes, plaid, noise, blocks, rings, gradient and Mandelbrot, each with random
+cell counts and colours, written as PNGs by the script itself. High-frequency checkers and
+stripes make UV stretching and the lack of multisampling obvious:
+
+```sh
+tools/generate_scene.py --count 40 --layout scatter --procedural 8 --seed 7 --render
+```
+
+Two things to keep in mind when reading the output: none of the meshes in `assets/` ships
+`vt` coordinates, so every texture is mapped through the spherical projection, and
+`road.jpg` is skipped because there is no JPEG decoder.
+
 ## Output
 
 The format is chosen from the `output` extension:
@@ -196,6 +243,7 @@ src/geometry/           mesh types and UV projection
 src/io/                 OBJ loader, PNG/PPM readers and writers
 src/core/               vectors, matrices, colors, textures
 tests/                  CTest unit tests and a golden image
+tools/                  random scene generator
 third_party/nlohmann/   vendored JSON library
 assets/                 example scene, meshes and textures
 ```
