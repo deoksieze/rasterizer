@@ -14,11 +14,11 @@
   },
   "objects": [
     {
-      "mesh": "assets/teapot.obj",
-      "texture": "assets/Ruslan_texture.ppm",
+      "mesh": "assets/cube.obj",
+      "texture": "assets/road.png",
       "translate": [0, 0, -10],
-      "rotate_degrees": [30, 36, 0],
-      "scale": [1, 1, 1]
+      "rotate_degrees": [0, 0, 180],
+      "scale": [10, 10, 10]
     }
   ]
 }
