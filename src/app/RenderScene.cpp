@@ -9,7 +9,7 @@
 #include "geometry/Mesh.h"
 #include "geometry/UvProjection.h"
 #include "io/ObjLoader.h"
-#include "io/PpmLoader.h"
+#include "io/TextureLoader.h"
 #include "raster/Clipper.h"
 #include "raster/Projector.h"
 #include "raster/Rasterizer.h"
@@ -39,7 +39,7 @@ Framebuffer RenderScene(const Scene& scene) {
 
     std::optional<Texture> texture;
     if (!object.texture_path.empty()) {
-      texture = LoadPpmP6(object.texture_path);
+      texture = LoadTexture(object.texture_path);
     }
 
     TransformMeshToClipTriangles(mesh, object.model, scene.camera.view,

@@ -161,9 +161,12 @@ Point an object at a texture with its `texture` field:
 
 Rules:
 
-- Textures must be **binary PPM (P6)**. PNG output is supported, but PNG is not accepted
-  as a texture *input*. Convert PNG with ImageMagick (`magick in.png in.ppm`, `convert`
-  produces P6 by default).
+- Textures are **PNG** or **binary PPM (P6)**; the format is chosen from the file extension.
+  PNG inputs go through libpng, and every PNG flavour is accepted: palette, grayscale,
+  RGB, RGBA, 1-16 bits per channel and interlaced. Anything that is not 8-bit RGB is
+  converted on load — 16-bit samples are reduced to their most significant 8 bits and the
+  alpha channel is discarded, so the colour underneath a transparent pixel is kept as
+  authored rather than blended.
 - UVs come from the mesh's `vt` data and are interpolated perspective-correctly.
 - If the mesh has no `vt` at all (`teapot.obj`, `4.obj`, `manifold.obj` and
   `triangle.obj` are all in this situation), a spherical projection is applied

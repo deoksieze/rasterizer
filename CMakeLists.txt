@@ -23,9 +23,11 @@ add_library(rasterizer_lib STATIC
   src/geometry/UvProjection.cpp
   src/io/ImageWriter.cpp
   src/io/ObjLoader.cpp
+  src/io/PngLoader.cpp
   src/io/PngWriter.cpp
   src/io/PpmLoader.cpp
   src/io/PpmWriter.cpp
+  src/io/TextureLoader.cpp
   src/raster/Clipper.cpp
   src/raster/Framebuffer.cpp
   src/raster/Projector.cpp
